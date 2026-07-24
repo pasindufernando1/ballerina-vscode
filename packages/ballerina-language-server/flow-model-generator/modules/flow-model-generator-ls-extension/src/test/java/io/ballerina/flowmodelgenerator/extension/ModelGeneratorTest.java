@@ -74,7 +74,7 @@ public class ModelGeneratorTest extends AbstractLSTest {
                 "flags2.json",
                 // TODO: remove after deprecated ballerinax/ai imports are migrated
                 // chat_agent / agent_with_backticks sources import ballerinax/ai (removed from offline
-                // cache) — see REMAINING_TEST_FAILURES.md
+                // cache)
                 "chat_agent.json",
                 "agent_with_backticks_in_system_prompt.json"
         };

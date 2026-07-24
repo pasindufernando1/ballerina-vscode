@@ -64,7 +64,7 @@ public class FlowNodeGeneratorTest extends AbstractLSTest {
     protected String[] skipList() {
         // TODO: remove after deprecated ballerinax/ai imports are migrated.
         // Configs 1-4 map to sources agent_3/agent_5/agent_6/agent_7 respectively, which import the retired
-        // ballerinax/ai (removed from the offline cache) — see REMAINING_TEST_FAILURES.md.
+        // ballerinax/ai (removed from the offline cache)
         // (config 7 -> agent_12 imports ballerina/ai, not ballerinax/ai, so it stays enabled.)
         return new String[]{
                 "agent_call_flow_node_1.json",   // agent_3 (ballerinax/ai)

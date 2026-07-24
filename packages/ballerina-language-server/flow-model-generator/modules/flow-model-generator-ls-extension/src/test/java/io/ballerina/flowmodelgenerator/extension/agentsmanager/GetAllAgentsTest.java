@@ -52,7 +52,7 @@ public class GetAllAgentsTest extends AbstractLSTest {
     @Override
     protected String[] skipList() {
         // TODO: remove after deprecated ballerinax/ai imports are migrated
-        // get_all_ballerinax_agents.json uses agent_1 which imports ballerinax/ai — see REMAINING_TEST_FAILURES.md
+        // get_all_ballerinax_agents.json uses agent_1 which imports ballerinax/ai
         return new String[]{
                 "get_all_ballerinax_agents.json"
         };

@@ -68,7 +68,7 @@ public class ModuleNodesTest extends AbstractLSTest {
         return new String[]{
                 "new_agent_model.json",
                 // TODO: remove after deprecated ballerinax/ai imports are migrated
-                // agent source imports ballerinax/ai (removed from offline cache) — see REMAINING_TEST_FAILURES.md
+                // agent source imports ballerinax/ai (removed from offline cache)
                 "agent_model.json"
         };
     }
