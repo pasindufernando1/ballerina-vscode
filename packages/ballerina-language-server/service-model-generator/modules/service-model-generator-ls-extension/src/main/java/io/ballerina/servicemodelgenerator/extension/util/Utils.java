@@ -79,6 +79,7 @@ import io.ballerina.servicemodelgenerator.extension.model.request.TriggerRequest
 import io.ballerina.tools.text.LinePosition;
 import io.ballerina.tools.text.LineRange;
 import org.ballerinalang.langserver.LSClientLogger;
+import org.ballerinalang.langserver.common.utils.CommonUtil;
 import org.ballerinalang.langserver.common.utils.NameUtil;
 import org.eclipse.lsp4j.MessageType;
 import org.eclipse.lsp4j.Position;
@@ -1593,7 +1594,7 @@ public final class Utils {
         // Distribution-bundled packages (e.g. ballerina/file, ballerina/mcp) are resolved by the
         // downstream builder from the build-provisioned distribution; a package that is genuinely
         // unavailable offline fails loudly there instead of being pulled. Production is unchanged.
-        if (PackageUtil.isOffline()) {
+        if (CommonUtil.TEST_OFFLINE) {
             return;
         }
 

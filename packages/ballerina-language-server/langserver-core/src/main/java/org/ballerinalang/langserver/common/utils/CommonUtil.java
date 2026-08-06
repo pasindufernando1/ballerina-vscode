@@ -103,7 +103,9 @@ public final class CommonUtil {
 
     // Set by the Gradle test tasks (-Dls.test.offline=true). When enabled, every site that would contact Ballerina
     // Central is forced offline so tests resolve only from the build-provisioned Ballerina home. Defaults to false, so
-    // production behaviour is unchanged. See also FORCE_OFFLINE in PackageUtil and OFFLINE in RemoteCentral.
+    // production behaviour is unchanged. This is the single flag for all modules that can see langserver-core;
+    // flow-model-central-client cannot (langserver-core depends on it), so RemoteCentral reads the same system
+    // property into its own OFFLINE constant.
     public static final boolean TEST_OFFLINE = Boolean.getBoolean("ls.test.offline");
 
     public static final String BALLERINA_CMD;

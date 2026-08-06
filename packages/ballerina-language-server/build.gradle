@@ -106,8 +106,9 @@ subprojects {
         ballerinaStdLibs "io.ballerina.stdlib:tcp-ballerina:${stdlibTcpVersion}"
 
         /* Packages bundled in the full Ballerina distribution but not in
-           jballerina-tools; test fixtures need them at the versions locked in
-           build-config/ballerina_dependencies/Dependencies.toml */
+           jballerina-tools. These overlay the test distribution's own repo and are
+           deliberately versioned independently of the offline central cache locked in
+           build-config/ballerina_dependencies/Dependencies.toml - see gradle.properties. */
         ballerinaStdLibs "io.ballerina.stdlib:ai-ballerina:${stdlibAiVersion}"
         ballerinaStdLibs "io.ballerina.lib:avro-ballerina:${stdlibAvroVersion}"
         ballerinaStdLibs "io.ballerina.stdlib:cache-ballerina:${stdlibCacheVersion}"

@@ -134,6 +134,13 @@ public class BallerinaBaseCompilerApi extends BallerinaCompilerApi {
     }
 
     @Override
+    public BuildOptions offlineBalaBuildOptions() {
+        // BuildOptions.Builder#setLockingMode was only introduced in U13, so the fallback implementation can do no
+        // more than force offline resolution.
+        return BuildOptions.builder().setOffline(true).build();
+    }
+
+    @Override
     public boolean isWorkspaceProjectRoot(Path path) {
         return false;
     }

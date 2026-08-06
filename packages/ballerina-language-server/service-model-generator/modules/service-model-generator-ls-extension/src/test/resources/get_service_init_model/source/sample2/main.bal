@@ -1,6 +1,6 @@
 import ballerina/mqtt;
 import ballerinax/rabbitmq;
-// import ballerinax/salesforce;
+// import ballerinax/salesforce; // Disabled: salesforce fails to load from its BIR under the test-provisioned distribution. See https://github.com/wso2/product-integrator/issues/1920
 import ballerinax/sap.jco;
 import ballerinax/solace;
 import ballerinax/solace.jms;

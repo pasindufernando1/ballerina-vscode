@@ -31,6 +31,7 @@ import io.ballerina.projects.TomlDocument;
 import io.ballerina.projects.directory.BuildProject;
 import io.ballerina.projects.directory.ProjectLoader;
 import io.ballerina.projects.directory.WorkspaceProject;
+import io.ballerina.projects.environment.PackageLockingMode;
 import io.ballerina.projects.util.ProjectPaths;
 import io.ballerina.tools.diagnostics.Diagnostic;
 import org.ballerinalang.annotation.JavaSPIService;
@@ -115,6 +116,13 @@ public class BallerinaU130CompilerApi extends BallerinaU123CompilerApi {
     @Override
     public Project loadProject(Path path, ProjectEnvironmentBuilder environmentBuilder) {
         return ProjectLoader.load(path, environmentBuilder).project();
+    }
+
+    @Override
+    public BuildOptions offlineBalaBuildOptions() {
+        // SOFT locking lets a bala's baked transitive versions re-resolve to the versions available locally instead
+        // of demanding the exact baked version, which is often not provisioned.
+        return BuildOptions.builder().setOffline(true).setLockingMode(PackageLockingMode.SOFT).build();
     }
 
     @Override

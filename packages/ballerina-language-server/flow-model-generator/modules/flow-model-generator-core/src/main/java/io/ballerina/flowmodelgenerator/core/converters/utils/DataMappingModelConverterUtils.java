@@ -35,6 +35,7 @@ import io.ballerina.projects.directory.BuildProject;
 import io.ballerina.projects.directory.SingleFileProject;
 import io.ballerina.projects.util.ProjectUtils;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.ballerinalang.langserver.common.utils.CommonUtil;
 import org.ballerinalang.langserver.commons.workspace.WorkspaceManager;
 
 import java.nio.file.Path;
@@ -114,7 +115,7 @@ public final class DataMappingModelConverterUtils {
             Path projectRoot = ProjectUtils.findProjectRoot(filePath);
             if (projectRoot == null) {
                 // Since the project-root cannot be found, the provided file is considered as SingleFileProject.
-                project = PackageUtil.isOffline()
+                project = CommonUtil.TEST_OFFLINE
                         ? SingleFileProject.load(filePath, BuildOptions.builder().setOffline(true).build())
                         : SingleFileProject.load(filePath);
                 Package currentPackage = project.currentPackage();
@@ -127,7 +128,7 @@ public final class DataMappingModelConverterUtils {
                     }
                 });
             } else {
-                project = PackageUtil.isOffline()
+                project = CommonUtil.TEST_OFFLINE
                         ? BuildProject.load(projectRoot, BuildOptions.builder().setOffline(true).build())
                         : BuildProject.load(projectRoot);
                 Package currentPackage = project.currentPackage();

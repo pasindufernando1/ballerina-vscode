@@ -265,6 +265,17 @@ public abstract class BallerinaCompilerApi {
     public abstract Project loadProject(Path path, ProjectEnvironmentBuilder environmentBuilder);
 
     /**
+     * Build options for loading an already resolved bala without contacting Ballerina Central.
+     * <p>
+     * Beyond forcing offline resolution, U13 and above relax the locking mode so a bala's baked transitive versions
+     * re-resolve to the versions actually available locally instead of demanding the exact baked version. That
+     * locking-mode API does not exist in earlier distributions, hence the version-specific implementation.
+     *
+     * @return The build options to use when loading a bala offline.
+     */
+    public abstract BuildOptions offlineBalaBuildOptions();
+
+    /**
      * Checks if the given path is a workspace project root.
      *
      * @param path The path to check.
