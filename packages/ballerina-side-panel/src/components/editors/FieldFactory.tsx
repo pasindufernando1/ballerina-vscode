@@ -31,6 +31,28 @@ const Container = styled.div`
     width: 100%;
 `;
 
+/**
+ * The input types that get a mode of their own in the switcher. The first and last entries are the
+ * field's narrowed type and its expression fallback; entries in between used to be discarded, which
+ * hid modes the LS does emit — e.g. the SINGLE_SELECT of a union that mixes singletons with records
+ * or primitives (`StaticAuthConfig|...|DEFAULT_CREDENTIALS`, `"INFER_TOOL_COUNT"|int`).
+ */
+export const getRenderingTypes = (types: InputType[]): InputType[] => {
+    if (types.length <= 2) {
+        return types.length === 1 ? [types[0]] : [types[0], types[types.length - 1]];
+    }
+    const first = types[0];
+    const last = types[types.length - 1];
+    const claimedModes = new Set([getInputModeFromTypes(first), getInputModeFromTypes(last)]);
+    const middle = types.slice(1, -1).filter(type => {
+        const mode = getInputModeFromTypes(type);
+        if (mode === undefined || claimedModes.has(mode)) return false;
+        claimedModes.add(mode);
+        return true;
+    });
+    return [first, ...middle, last];
+};
+
 type FieldFactoryProps = {
     field: FormField;
     selectedNode?: NodeKind;
@@ -186,9 +208,7 @@ export const FieldFactory = (props: FieldFactoryProps) => {
             throw new Error("Field types are not defined");
         }
 
-        const newRenderingTypes = props.field.types.length === 1
-            ? [props.field.types[0]]
-            : [props.field.types[0], props.field.types[props.field.types.length - 1]];
+        const newRenderingTypes = getRenderingTypes(props.field.types);
         setRenderingEditors(newRenderingTypes);
 
         const isNewField = currentFieldKeyRef.current !== props.field.key;

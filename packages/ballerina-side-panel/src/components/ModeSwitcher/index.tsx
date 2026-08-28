@@ -17,9 +17,9 @@
  */
 
 import React, { useMemo, useState } from 'react';
-import { Label, Slider, SwitchWrapper } from './styles';
+import { Label, Slider, SwitchWrapper, getSegments } from './styles';
 import { InputMode } from '../editors/MultiModeExpressionEditor/ChipExpressionEditor/types';
-import { getDefaultExpressionMode, getSecondaryMode } from '../editors/MultiModeExpressionEditor/ChipExpressionEditor/utils';
+import { getInputModeFromTypes } from '../editors/MultiModeExpressionEditor/ChipExpressionEditor/utils';
 import { InputType } from '@wso2/ballerina-core';
 import { getEditorConfiguration } from '../editors/ExpressionField';
 import { useFormContext } from '../../context';
@@ -42,19 +42,18 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({ value, isRecordTypeField, o
     const [showWarning, setShowWarning] = useState(false);
     const [pendingMode, setPendingMode] = useState<InputMode | null>(null);
 
-    const defaultMode = useMemo(
-        //TODO: Should only return the getDefaultExpressionMode(types) once fields with type field is fixed to
+    // One segment per type the field offers. Most fields have two (a narrowed mode and the
+    // expression fallback), but a union mixing singletons with records or primitives has three.
+    const modes = useMemo(
+        //TODO: Should only derive from types once fields with type field is fixed to
         // update the types property correctly when changing the type.
-        () => isRecordTypeField ? InputMode.RECORD : getDefaultExpressionMode(types),
+        () => isRecordTypeField
+            ? [InputMode.RECORD, InputMode.EXP]
+            : (types ?? []).map(getInputModeFromTypes).filter(mode => mode !== undefined),
         [types, isRecordTypeField]
     );
 
-    const secondaryMode = useMemo(
-        //TODO: Should only return the getSecondaryMode(types) once fields with type field is fixed to
-        // update the types property correctly when changing the type.
-        () => isRecordTypeField ? InputMode.EXP : getSecondaryMode(types),
-        [types, isRecordTypeField]
-    );
+    const segments = useMemo(() => getSegments(modes.length), [modes.length]);
 
     const handleModeSwitch = (mode: InputMode) => {
         const currentFieldValue = getValues(fieldKey);
@@ -89,14 +88,28 @@ const ModeSwitcher: React.FC<ModeSwitcherProps> = ({ value, isRecordTypeField, o
         setShowWarning(false);
     };
 
-    const isChecked = value === secondaryMode;
+    const activeIndex = Math.max(0, modes.indexOf(value));
 
     return (
         <>
-            <SwitchWrapper>
-                <Slider checked={isChecked} data-testid={`mode-switcher-slider-${fieldKey}`}>
-                    <Label data-testid="primary-mode" active={!isChecked} onClick={() => handleModeSwitch(defaultMode)}>{defaultMode}</Label>
-                    <Label data-testid="expression-mode" active={isChecked} onClick={() => handleModeSwitch(secondaryMode)}>{secondaryMode}</Label>
+            <SwitchWrapper segmentCount={modes.length}>
+                <Slider
+                    segment={segments[activeIndex]}
+                    isFirst={activeIndex === 0}
+                    data-testid={`mode-switcher-slider-${fieldKey}`}
+                >
+                    {modes.map((mode, index) => (
+                        <Label
+                            key={mode}
+                            // Kept for the existing two-mode tests, which address the segments by role
+                            data-testid={index === 0 ? "primary-mode" : index === modes.length - 1 ? "expression-mode" : `mode-${mode}`}
+                            segment={segments[index]}
+                            active={index === activeIndex}
+                            onClick={() => handleModeSwitch(mode)}
+                        >
+                            {mode}
+                        </Label>
+                    ))}
                 </Slider>
             </SwitchWrapper>
             <WarningPopup

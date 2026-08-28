@@ -19,8 +19,34 @@
 import styled from "@emotion/styled";
 import { ThemeColors } from '@wso2/ui-toolkit';
 
+export interface Segment {
+  left: number;
+  width: number;
+}
+
+const MIN_SEGMENT_WIDTH_PX = 56;
+
+/**
+ * Horizontal layout of the switcher's segments, in percentages. The two-mode case keeps its
+ * long-standing 40/60 split — the second label is the expression fallback and reads wider —
+ * while three or more modes divide the track evenly.
+ */
+export const getSegments = (count: number): Segment[] => {
+  if (count <= 1) {
+    return [{ left: 0, width: 100 }];
+  }
+  if (count === 2) {
+    return [{ left: 0, width: 40 }, { left: 40, width: 60 }];
+  }
+  const width = 100 / count;
+  return Array.from({ length: count }, (_, index) => ({ left: index * width, width }));
+};
+
+export const getMinTrackWidth = (count: number) => Math.max(2, count) * MIN_SEGMENT_WIDTH_PX;
+
 interface LabelProps {
   active: boolean;
+  segment: Segment;
 }
 
 export const Label = styled.span<LabelProps>`
@@ -38,19 +64,11 @@ export const Label = styled.span<LabelProps>`
   align-items: center;
   justify-content: center;
   white-space: nowrap;
-  
-  &:first-of-type {
-    left: 0;
-    width: 40%;
-  }
-  
-  &:last-of-type {
-    left: 40%;
-    width: 60%;
-  }
+  left: ${props => props.segment.left}%;
+  width: ${props => props.segment.width}%;
 `;
 
-export const Slider = styled.div<{ checked: boolean }>`
+export const Slider = styled.div<{ segment: Segment; isFirst: boolean }>`
   position: absolute;
   top: 0;
   left: 0;
@@ -71,8 +89,10 @@ export const Slider = styled.div<{ checked: boolean }>`
     content: "";
     position: absolute;
     height: calc(100% - 4px);
-    width: ${props => props.checked ? 'calc(60% - 4px)' : 'calc(40% - 2px)'};
-    left: ${props => props.checked ? 'calc(40% + 2px)' : '2px'};
+    width: ${props => props.isFirst
+      ? `calc(${props.segment.width}% - 2px)`
+      : `calc(${props.segment.width}% - 4px)`};
+    left: ${props => props.isFirst ? '2px' : `calc(${props.segment.left}% + 2px)`};
     border-radius: 1px;
     background: ${ThemeColors.SURFACE_DIM};
     transition: all 0.25s cubic-bezier(0.4, 0.0, 0.2, 1);
@@ -82,19 +102,19 @@ export const Slider = styled.div<{ checked: boolean }>`
 
   &:active:before {
     background: ${ThemeColors.SURFACE_DIM};
-    box-shadow: 
+    box-shadow:
       0 1px 2px rgba(0, 0, 0, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
     transform: translateY(1px);
   }
 `;
 
-export const SwitchWrapper = styled.div`
+export const SwitchWrapper = styled.div<{ segmentCount: number }>`
   font-size: 12px;
   position: relative;
   display: inline-flex;
   align-items: center;
-  min-width: 112px;
+  min-width: ${props => getMinTrackWidth(props.segmentCount)}px;
   width: max-content;
   height: 24px;
   margin-top: 2px;

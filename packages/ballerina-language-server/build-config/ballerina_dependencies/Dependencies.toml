@@ -980,6 +980,26 @@ dependencies = [
 
 [[package]]
 org = "ballerinax"
+name = "aws"
+version = "1.0.0"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"}
+]
+
+[[package]]
+org = "ballerinax"
+name = "aws.sqs"
+version = "5.0.0"
+dependencies = [
+	{org = "ballerina", name = "jballerina.java"},
+	{org = "ballerinax", name = "aws"}
+]
+modules = [
+	{org = "ballerinax", packageName = "aws.sqs", moduleName = "aws.sqs"}
+]
+
+[[package]]
+org = "ballerinax"
 name = "azure.ai.search"
 version = "1.0.2"
 dependencies = [
@@ -1647,6 +1667,7 @@ dependencies = [
 	{org = "ballerinax", name = "ai.pinecone"},
 	{org = "ballerinax", name = "ai.weaviate"},
 	{org = "ballerinax", name = "asb"},
+	{org = "ballerinax", name = "aws.sqs"},
 	{org = "ballerinax", name = "azure.datalake"},
 	{org = "ballerinax", name = "azure_cosmosdb"},
 	{org = "ballerinax", name = "cdc"},

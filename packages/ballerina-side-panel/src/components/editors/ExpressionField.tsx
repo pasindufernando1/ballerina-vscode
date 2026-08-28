@@ -42,6 +42,7 @@ import { ChipExpressionEditorDefaultConfiguration } from './MultiModeExpressionE
 import { DynamicArrayBuilder } from './MultiModeExpressionEditor/DynamicArrayBuilder/DynamicArrayBuilder';
 import { isRecord } from './utils';
 import { NodeReferenceSelectEditor } from './MultiModeExpressionEditor/NodeReferenceSelectEditor/NodeReferenceSelectEditor';
+import { getInputModeFromTypes } from './MultiModeExpressionEditor/ChipExpressionEditor/utils';
 
 export interface ExpressionFieldProps {
     field: FormField;
@@ -181,7 +182,10 @@ export const ExpressionField: React.FC<ExpressionFieldProps> = (props: Expressio
     //below editors cannot have input value in array type
     if (Array.isArray(value)) return null;
 
-    const primaryInputType = getPrimaryInputType(field.types || []);
+    // The type backing the active mode is not necessarily the primary one: a union that mixes
+    // singletons with records/primitives puts its SINGLE_SELECT after the narrowed entry.
+    const activeInputType = field.types?.find(type => getInputModeFromTypes(type) === inputMode)
+        ?? getPrimaryInputType(field.types || []);
     if (inputMode === InputMode.BOOLEAN) {
         return (
             <BooleanEditor
@@ -201,13 +205,13 @@ export const ExpressionField: React.FC<ExpressionFieldProps> = (props: Expressio
                 />
             );
         }
-        if (isDropDownType(primaryInputType)) {
+        if (isDropDownType(activeInputType)) {
             return (
                 <EnumEditor
                     value={value}
                     field={field}
                     onChange={(val) => onChange(val, val?.length)}
-                    items={primaryInputType.options.map(option => (
+                    items={activeInputType.options.map(option => (
                         {
                             id: option.value,
                             content: option.label,

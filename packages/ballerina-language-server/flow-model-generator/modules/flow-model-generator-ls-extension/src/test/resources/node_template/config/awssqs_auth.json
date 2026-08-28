@@ -1,0 +1,475 @@
+{
+  "source": "empty.bal",
+  "description": "Sample diagram node",
+  "codedata": {
+    "node": "NEW_CONNECTION",
+    "org": "ballerinax",
+    "module": "aws.sqs",
+    "packageName": "aws.sqs",
+    "object": "Client",
+    "symbol": "init",
+    "version": "5.0.0",
+    "isGenerated": false
+  },
+  "output": {
+    "id": "31",
+    "metadata": {
+      "label": "AWS SQS",
+      "description": "The Amazon SQS API Client.\n\nProvides access to Amazon Simple Queue Service (SQS) using the AWS SDK for Java V2.\nSupports static credentials, profile-based credentials, and the default AWS credential\nprovider chain (environment variables, ECS container credentials, EC2 instance profiles, etc.).",
+      "icon": "https://bcentral-packageicons.azureedge.net/images/ballerinax_aws.sqs_5.0.0.png"
+    },
+    "codedata": {
+      "node": "NEW_CONNECTION",
+      "org": "ballerinax",
+      "module": "aws.sqs",
+      "packageName": "aws.sqs",
+      "object": "Client",
+      "symbol": "init",
+      "version": "5.0.0",
+      "isNew": true,
+      "isGenerated": false
+    },
+    "returning": false,
+    "properties": {
+      "auth": {
+        "metadata": {
+          "label": "Auth",
+          "description": "Authentication configuration: any standard credential source supported by\nAWS — static credentials, an AWS profile, STS assume-role,\nweb identity (OIDC), IAM Identity Center (SSO), an external credential\nprocess, or the default credential provider chain"
+        },
+        "types": [
+          {
+            "fieldType": "RECORD_MAP_EXPRESSION",
+            "ballerinaType": "auth:StaticAuthConfig|auth:ProfileAuthConfig|auth:AssumeRoleConfig|auth:WebIdentityConfig|auth:SsoAuthConfig|auth:ProcessAuthConfig",
+            "typeMembers": [
+              {
+                "type": "StaticAuthConfig",
+                "packageInfo": "ballerinax:aws.auth:1.0.0",
+                "packageName": "aws",
+                "kind": "RECORD_TYPE",
+                "selected": false
+              },
+              {
+                "type": "ProfileAuthConfig",
+                "packageInfo": "ballerinax:aws.auth:1.0.0",
+                "packageName": "aws",
+                "kind": "RECORD_TYPE",
+                "selected": false
+              },
+              {
+                "type": "AssumeRoleConfig",
+                "packageInfo": "ballerinax:aws.auth:1.0.0",
+                "packageName": "aws",
+                "kind": "RECORD_TYPE",
+                "selected": false
+              },
+              {
+                "type": "WebIdentityConfig",
+                "packageInfo": "ballerinax:aws.auth:1.0.0",
+                "packageName": "aws",
+                "kind": "RECORD_TYPE",
+                "selected": false
+              },
+              {
+                "type": "SsoAuthConfig",
+                "packageInfo": "ballerinax:aws.auth:1.0.0",
+                "packageName": "aws",
+                "kind": "RECORD_TYPE",
+                "selected": false
+              },
+              {
+                "type": "ProcessAuthConfig",
+                "packageInfo": "ballerinax:aws.auth:1.0.0",
+                "packageName": "aws",
+                "kind": "RECORD_TYPE",
+                "selected": false
+              }
+            ],
+            "selected": false
+          },
+          {
+            "fieldType": "SINGLE_SELECT",
+            "options": [
+              {
+                "label": "DEFAULT_CREDENTIALS",
+                "value": "\"DEFAULT_CREDENTIALS\""
+              }
+            ],
+            "selected": false
+          },
+          {
+            "fieldType": "EXPRESSION",
+            "ballerinaType": "auth:AuthConfig",
+            "selected": false
+          }
+        ],
+        "placeholder": "{accessKeyId: \"\", secretAccessKey: \"\"}",
+        "optional": false,
+        "editable": true,
+        "advanced": false,
+        "hidden": false,
+        "codedata": {
+          "kind": "INCLUDED_FIELD",
+          "originalName": "auth"
+        },
+        "defaultValue": "{accessKeyId: \"\", secretAccessKey: \"\"}"
+      },
+      "region": {
+        "metadata": {
+          "label": "Region",
+          "description": "AWS region: an `aws:Region` enum member or a plain region\nstring (e.g., `\"us-east-1\"`) for regions not yet in the enum"
+        },
+        "types": [
+          {
+            "fieldType": "SINGLE_SELECT",
+            "options": [
+              {
+                "label": "us-west-2",
+                "value": "\"us-west-2\""
+              },
+              {
+                "label": "us-west-1",
+                "value": "\"us-west-1\""
+              },
+              {
+                "label": "us-isof-south-1",
+                "value": "\"us-isof-south-1\""
+              },
+              {
+                "label": "us-isof-east-1",
+                "value": "\"us-isof-east-1\""
+              },
+              {
+                "label": "us-isob-west-1",
+                "value": "\"us-isob-west-1\""
+              },
+              {
+                "label": "us-isob-east-1",
+                "value": "\"us-isob-east-1\""
+              },
+              {
+                "label": "us-iso-west-1",
+                "value": "\"us-iso-west-1\""
+              },
+              {
+                "label": "us-iso-east-1",
+                "value": "\"us-iso-east-1\""
+              },
+              {
+                "label": "us-gov-west-1",
+                "value": "\"us-gov-west-1\""
+              },
+              {
+                "label": "us-gov-east-1",
+                "value": "\"us-gov-east-1\""
+              },
+              {
+                "label": "us-east-2",
+                "value": "\"us-east-2\""
+              },
+              {
+                "label": "us-east-1",
+                "value": "\"us-east-1\""
+              },
+              {
+                "label": "sa-east-1",
+                "value": "\"sa-east-1\""
+              },
+              {
+                "label": "mx-central-1",
+                "value": "\"mx-central-1\""
+              },
+              {
+                "label": "me-south-1",
+                "value": "\"me-south-1\""
+              },
+              {
+                "label": "me-central-1",
+                "value": "\"me-central-1\""
+              },
+              {
+                "label": "il-central-1",
+                "value": "\"il-central-1\""
+              },
+              {
+                "label": "eusc-de-east-1",
+                "value": "\"eusc-de-east-1\""
+              },
+              {
+                "label": "eu-isoe-west-1",
+                "value": "\"eu-isoe-west-1\""
+              },
+              {
+                "label": "eu-west-3",
+                "value": "\"eu-west-3\""
+              },
+              {
+                "label": "eu-west-2",
+                "value": "\"eu-west-2\""
+              },
+              {
+                "label": "eu-west-1",
+                "value": "\"eu-west-1\""
+              },
+              {
+                "label": "eu-south-2",
+                "value": "\"eu-south-2\""
+              },
+              {
+                "label": "eu-south-1",
+                "value": "\"eu-south-1\""
+              },
+              {
+                "label": "eu-north-1",
+                "value": "\"eu-north-1\""
+              },
+              {
+                "label": "eu-central-2",
+                "value": "\"eu-central-2\""
+              },
+              {
+                "label": "eu-central-1",
+                "value": "\"eu-central-1\""
+              },
+              {
+                "label": "cn-northwest-1",
+                "value": "\"cn-northwest-1\""
+              },
+              {
+                "label": "cn-north-1",
+                "value": "\"cn-north-1\""
+              },
+              {
+                "label": "ca-west-1",
+                "value": "\"ca-west-1\""
+              },
+              {
+                "label": "ca-central-1",
+                "value": "\"ca-central-1\""
+              },
+              {
+                "label": "aws-iso-f-global",
+                "value": "\"aws-iso-f-global\""
+              },
+              {
+                "label": "aws-iso-e-global",
+                "value": "\"aws-iso-e-global\""
+              },
+              {
+                "label": "aws-iso-b-global",
+                "value": "\"aws-iso-b-global\""
+              },
+              {
+                "label": "aws-iso-global",
+                "value": "\"aws-iso-global\""
+              },
+              {
+                "label": "aws-us-gov-global",
+                "value": "\"aws-us-gov-global\""
+              },
+              {
+                "label": "aws-cn-global",
+                "value": "\"aws-cn-global\""
+              },
+              {
+                "label": "aws-global",
+                "value": "\"aws-global\""
+              },
+              {
+                "label": "ap-southeast-7",
+                "value": "\"ap-southeast-7\""
+              },
+              {
+                "label": "ap-southeast-6",
+                "value": "\"ap-southeast-6\""
+              },
+              {
+                "label": "ap-southeast-5",
+                "value": "\"ap-southeast-5\""
+              },
+              {
+                "label": "ap-southeast-4",
+                "value": "\"ap-southeast-4\""
+              },
+              {
+                "label": "ap-southeast-3",
+                "value": "\"ap-southeast-3\""
+              },
+              {
+                "label": "ap-southeast-2",
+                "value": "\"ap-southeast-2\""
+              },
+              {
+                "label": "ap-southeast-1",
+                "value": "\"ap-southeast-1\""
+              },
+              {
+                "label": "ap-south-2",
+                "value": "\"ap-south-2\""
+              },
+              {
+                "label": "ap-south-1",
+                "value": "\"ap-south-1\""
+              },
+              {
+                "label": "ap-northeast-3",
+                "value": "\"ap-northeast-3\""
+              },
+              {
+                "label": "ap-northeast-2",
+                "value": "\"ap-northeast-2\""
+              },
+              {
+                "label": "ap-northeast-1",
+                "value": "\"ap-northeast-1\""
+              },
+              {
+                "label": "ap-east-2",
+                "value": "\"ap-east-2\""
+              },
+              {
+                "label": "ap-east-1",
+                "value": "\"ap-east-1\""
+              },
+              {
+                "label": "af-south-1",
+                "value": "\"af-south-1\""
+              }
+            ],
+            "selected": false
+          },
+          {
+            "fieldType": "TEXT",
+            "ballerinaType": "string",
+            "selected": false
+          },
+          {
+            "fieldType": "EXPRESSION",
+            "ballerinaType": "aws:Region|string",
+            "selected": false
+          }
+        ],
+        "placeholder": "\"us-west-2\"",
+        "optional": false,
+        "editable": true,
+        "advanced": false,
+        "hidden": false,
+        "codedata": {
+          "kind": "INCLUDED_FIELD",
+          "originalName": "region"
+        },
+        "defaultValue": "\"us-west-2\""
+      },
+      "endpoint": {
+        "metadata": {
+          "label": "Endpoint",
+          "description": "Optional endpoint options: FIPS/dualstack variants, or a custom\nendpoint override (e.g. LocalStack, VPC interface endpoints)"
+        },
+        "types": [
+          {
+            "fieldType": "RECORD_MAP_EXPRESSION",
+            "ballerinaType": "aws:EndpointConfig",
+            "typeMembers": [
+              {
+                "type": "EndpointConfig",
+                "packageInfo": "ballerinax:aws:1.0.0",
+                "packageName": "aws",
+                "kind": "RECORD_TYPE",
+                "selected": false
+              }
+            ],
+            "selected": false
+          },
+          {
+            "fieldType": "EXPRESSION",
+            "ballerinaType": "aws:EndpointConfig",
+            "selected": false
+          }
+        ],
+        "placeholder": "{}",
+        "optional": true,
+        "editable": true,
+        "advanced": true,
+        "hidden": false,
+        "codedata": {
+          "kind": "INCLUDED_FIELD",
+          "originalName": "endpoint"
+        },
+        "defaultValue": "{}"
+      },
+      "type": {
+        "metadata": {
+          "label": "Result Type",
+          "description": "Type of the variable"
+        },
+        "types": [
+          {
+            "fieldType": "TYPE",
+            "selected": true
+          }
+        ],
+        "value": "sqs:Client",
+        "placeholder": "var",
+        "optional": false,
+        "editable": false,
+        "advanced": false,
+        "hidden": true,
+        "codedata": {},
+        "imports": {
+          "sqs": "ballerinax/aws.sqs"
+        }
+      },
+      "variable": {
+        "metadata": {
+          "label": "Connection Name",
+          "description": "Name of the connection"
+        },
+        "types": [
+          {
+            "fieldType": "IDENTIFIER",
+            "selected": true
+          }
+        ],
+        "value": "sqsClient",
+        "optional": false,
+        "editable": true,
+        "advanced": false,
+        "hidden": false
+      },
+      "scope": {
+        "metadata": {
+          "label": "Connection Scope",
+          "description": "Scope of the connection, Global or Local"
+        },
+        "types": [
+          {
+            "fieldType": "ENUM",
+            "selected": true
+          }
+        ],
+        "value": "Global",
+        "optional": false,
+        "editable": true,
+        "advanced": true,
+        "hidden": true
+      },
+      "checkError": {
+        "metadata": {
+          "label": "Check Error",
+          "description": "Terminate on error"
+        },
+        "types": [
+          {
+            "fieldType": "FLAG",
+            "selected": true
+          }
+        ],
+        "value": true,
+        "optional": false,
+        "editable": false,
+        "advanced": true,
+        "hidden": true
+      }
+    },
+    "flags": 0
+  }
+}

@@ -785,7 +785,9 @@ public record Property(Metadata metadata, List<PropertyType> types, Object value
                 Set<String> visited = TYPE_EXPANSION_VISITED.get();
                 if (visited.add(ballerinaType)) {
                     try {
-                        List<TypeSymbol> typeSymbols = unionTypeSymbol.memberTypeDescriptors();
+                        // Flatten nested unions (e.g. enums such as `aws:Region` within `aws:Region|string`)
+                        // so that their members are expanded instead of being dropped
+                        List<TypeSymbol> typeSymbols = flattenUnionMembers(unionTypeSymbol);
                         List<Option> options = new ArrayList<>();
                         boolean allSingletons = true;
                         for (TypeSymbol symbol : typeSymbols) {
@@ -808,9 +810,27 @@ public record Property(Metadata metadata, List<PropertyType> types, Object value
                             builder.type().fieldType(ValueType.SINGLE_SELECT).options(options).stepOut();
                         } else {
                             // Handle union of primitive types by defining an input type for each primitive type
+                            List<Option> singletonOptions = new ArrayList<>();
+                            int singletonSlot = -1;
                             for (TypeSymbol ts : typeSymbols) {
+                                if (CommonUtil.getRawType(ts).typeKind() == TypeDescKind.SINGLETON) {
+                                    // Singletons mixed with other members are collected into one single-select
+                                    if (singletonSlot == -1) {
+                                        singletonSlot = builder.types.size(); // keep the member declaration order
+                                    }
+                                    singletonOptions.add(new Option(CommonUtils.removeQuotes(ts.signature()),
+                                            ts.signature()));
+                                    continue;
+                                }
                                 handlePrimitiveType(ts, CommonUtils.getTypeSignature(ts, moduleInfo), semanticModel,
                                         moduleInfo, builder);
+                            }
+                            if (singletonSlot != -1) {
+                                if (defaultValue != null && !defaultValue.isEmpty()) {
+                                    singletonOptions = reorderOptionsByDefaultValue(singletonOptions, defaultValue);
+                                }
+                                builder.types.add(singletonSlot, new PropertyType(ValueType.SINGLE_SELECT, null,
+                                        null, singletonOptions, null, null, null, false));
                             }
                             // group by the fieldType
                             List<PropertyType> propTypes = builder.types;
@@ -1363,6 +1383,33 @@ public record Property(Metadata metadata, List<PropertyType> types, Object value
                 case LIST_BINDING_PATTERN, LIST_CONSTRUCTOR -> ValueType.REPEATABLE_LIST;
                 default -> ValueType.EXPRESSION;
             };
+        }
+
+        /**
+         * Flattens the members of a union, expanding any member that is itself a union (such as an enum referenced
+         * within a wider union). Without this, nested union members are silently dropped since
+         * {@link #handlePrimitiveType} does not handle the union type kind.
+         *
+         * @param unionTypeSymbol the union to flatten
+         * @return the flattened member types, in declaration order
+         */
+        private static List<TypeSymbol> flattenUnionMembers(UnionTypeSymbol unionTypeSymbol) {
+            List<TypeSymbol> members = new ArrayList<>();
+            flattenUnionMembers(unionTypeSymbol, members, new HashSet<>());
+            return members;
+        }
+
+        private static void flattenUnionMembers(UnionTypeSymbol unionTypeSymbol, List<TypeSymbol> members,
+                                                Set<String> visited) {
+            for (TypeSymbol member : unionTypeSymbol.memberTypeDescriptors()) {
+                TypeSymbol rawMember = CommonUtil.getRawType(member);
+                // Guard against self-referential unions
+                if (rawMember instanceof UnionTypeSymbol nestedUnion && visited.add(member.signature())) {
+                    flattenUnionMembers(nestedUnion, members, visited);
+                    continue;
+                }
+                members.add(member);
+            }
         }
 
         /**
