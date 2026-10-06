@@ -9,3 +9,6 @@ function transform(Person person, Admission admission) returns Employee => {
     }
 };
 
+function buildFullName(string firstName, string lastName) returns string {
+    return firstName + " " + lastName;
+}

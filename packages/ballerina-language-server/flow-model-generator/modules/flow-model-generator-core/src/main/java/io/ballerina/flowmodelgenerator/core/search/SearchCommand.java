@@ -24,7 +24,6 @@ import io.ballerina.flowmodelgenerator.core.model.Category;
 import io.ballerina.flowmodelgenerator.core.model.Item;
 import io.ballerina.modelgenerator.commons.SearchDatabaseManager;
 import io.ballerina.modelgenerator.commons.SearchResult;
-import io.ballerina.projects.Document;
 import io.ballerina.projects.Project;
 import io.ballerina.tools.text.LineRange;
 
@@ -54,7 +53,6 @@ public abstract class SearchCommand {
     final SearchDatabaseManager dbManager;
     final DefaultViewHolder defaultViewHolder;
 
-    protected static final String DATA_MAPPER_FILE_NAME = "data_mappings.bal";
     protected static final String CURRENT_INTEGRATION_INDICATOR = " (Current Integration)";
 
     private static final Gson GSON = new Gson();
@@ -62,12 +60,11 @@ public abstract class SearchCommand {
     private static final int DEFAULT_OFFSET = 0;
     private static final boolean DEFAULT_FILTER_BY_CURRENT_ORG = false;
 
-    public static SearchCommand from(Kind kind, Project module, LineRange position, Map<String, String> queryMap,
-                                     Document functionsDoc) {
+    public static SearchCommand from(Kind kind, Project module, LineRange position, Map<String, String> queryMap) {
         return switch (kind) {
-            case FUNCTION -> new FunctionSearchCommand(module, position, queryMap, functionsDoc);
+            case FUNCTION -> new FunctionSearchCommand(module, position, queryMap);
             case CONNECTOR -> new ConnectorSearchCommand(module, position, queryMap);
-            case NP_FUNCTION -> new NPFunctionSearchCommand(module, position, queryMap, functionsDoc);
+            case NP_FUNCTION -> new NPFunctionSearchCommand(module, position, queryMap);
             case TYPE -> new TypeSearchCommand(module, position, queryMap);
             case MODEL_PROVIDER -> new ModelProviderSearchCommand(module, position, queryMap);
             case EMBEDDING_PROVIDER -> new EmbeddingProviderSearchCommand(module, position, queryMap);
@@ -81,7 +78,7 @@ public abstract class SearchCommand {
             case SHORT_TERM_MEMORY_STORE -> new ShortTermMemoryStoreSearchCommand(module, position, queryMap);
             case AGENT_TOOL -> new AgentToolSearchCommand(module, position, queryMap);
             case KNOWLEDGE_BASE -> new KnowledgeBaseSearchCommand(module, position, queryMap);
-            case ALL -> new AllKindsSearchCommand(module, position, queryMap, functionsDoc);
+            case ALL -> new AllKindsSearchCommand(module, position, queryMap);
             case WORKFLOW_RUN -> new WorkflowSearchCommand(module, position, queryMap);
             case ACTIVITY_CALL -> new ActivitySearchCommand(module, position, queryMap);
             case EVAL_TEMPLATE -> new EvalTemplateSearchCommand(module, position, queryMap);

@@ -29,7 +29,6 @@ import io.ballerina.flowmodelgenerator.core.utils.CentralSearchUtil;
 import io.ballerina.modelgenerator.commons.CommonUtils;
 import io.ballerina.modelgenerator.commons.ModuleCoordinate;
 import io.ballerina.modelgenerator.commons.SearchResult;
-import io.ballerina.projects.Document;
 import io.ballerina.projects.Project;
 import io.ballerina.tools.text.LineRange;
 
@@ -85,16 +84,13 @@ class FunctionSearchCommand extends SearchCommand {
     private static final int IMPORTED_MODULE_FUNCTION_LIMIT = 50;
     private static final int MAX_TOPPED_UP_MODULES = 5;
     private final Set<ModuleCoordinate> importedModules;
-    private final Document functionsDoc;
     // When set (to "ballerina" or "ballerinax"), the request loads the next page of that single library section
     // instead of the full view. Used by the per-section "Show more" pagination.
     private final String sectionOrg;
 
-    public FunctionSearchCommand(Project project, LineRange position, Map<String, String> queryMap,
-                                 Document functionsDoc) {
+    public FunctionSearchCommand(Project project, LineRange position, Map<String, String> queryMap) {
         super(project, position, queryMap);
         this.importedModules = ImportedModules.collect(project);
-        this.functionsDoc = functionsDoc;
         String requestedSectionOrg = queryMap != null ? queryMap.getOrDefault("orgName", "") : "";
         this.sectionOrg = PAGINATED_SECTION_ORGS.contains(requestedSectionOrg) ? requestedSectionOrg : "";
         // TODO: Use this method when https://github.com/ballerina-platform/ballerina-lang/issues/43695 is fixed
@@ -113,8 +109,7 @@ class FunctionSearchCommand extends SearchCommand {
         List<SearchResult> searchResults = new ArrayList<>();
 
         if (offset == 0) {
-            WorkspaceFunctionNodeBuilder.buildSubmoduleWorkspaceNodes(
-                    rootBuilder, project, position, query, functionsDoc);
+            WorkspaceFunctionNodeBuilder.buildSubmoduleWorkspaceNodes(rootBuilder, project, position, query);
             if (!importedModules.isEmpty()) {
                 searchResults.addAll(
                         dbManager.searchFunctionsByPackages(importedModules, List.of(), Integer.MAX_VALUE, 0));
@@ -151,7 +146,7 @@ class FunctionSearchCommand extends SearchCommand {
             return loadLibrarySection();
         }
 
-        WorkspaceFunctionNodeBuilder.buildSubmoduleWorkspaceNodes(rootBuilder, project, position, query, functionsDoc);
+        WorkspaceFunctionNodeBuilder.buildSubmoduleWorkspaceNodes(rootBuilder, project, position, query);
 
         // Search functions from Ballerina Central, falling back to the local index on failure or timeout. Querying
         // Central live ensures functions published after the bundled index was built are still discoverable.

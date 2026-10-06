@@ -30,7 +30,6 @@ import io.ballerina.modelgenerator.commons.CommonUtils;
 import io.ballerina.modelgenerator.commons.ModuleCoordinate;
 import io.ballerina.modelgenerator.commons.SearchResult;
 import io.ballerina.modelgenerator.commons.UnifiedSearchResult;
-import io.ballerina.projects.Document;
 import io.ballerina.projects.Project;
 import io.ballerina.tools.text.LineRange;
 
@@ -61,7 +60,6 @@ import static io.ballerina.flowmodelgenerator.core.model.Category.Name.STANDARD_
  */
 public class AllKindsSearchCommand extends SearchCommand {
 
-    private final Document functionsDoc;
     private final Set<ModuleCoordinate> importedModules;
     private final ExecutorService executorService;
 
@@ -71,10 +69,8 @@ public class AllKindsSearchCommand extends SearchCommand {
             Kind.CONNECTOR
     );
 
-    public AllKindsSearchCommand(Project project, LineRange position, Map<String, String> queryMap,
-                                 Document functionsDoc) {
+    public AllKindsSearchCommand(Project project, LineRange position, Map<String, String> queryMap) {
         super(project, position, queryMap);
-        this.functionsDoc = functionsDoc;
         this.importedModules = ImportedModules.collect(project);
         this.executorService = Executors.newCachedThreadPool();
     }
@@ -111,7 +107,7 @@ public class AllKindsSearchCommand extends SearchCommand {
      */
     private List<Item> executeHybridSearch() {
         // Add workspace functions to the root builder
-        WorkspaceFunctionNodeBuilder.buildWorkspaceNodes(rootBuilder, project, position, query, functionsDoc);
+        WorkspaceFunctionNodeBuilder.buildWorkspaceNodes(rootBuilder, project, position, query);
 
         List<CompletableFuture<List<Item>>> futures = new ArrayList<>();
 
@@ -261,8 +257,7 @@ public class AllKindsSearchCommand extends SearchCommand {
      */
     private SearchCommand createSearchCommand(Kind searchType) {
         return switch (searchType) {
-            case FUNCTION ->
-                    new FunctionSearchCommand(project, position, getQueryMapForType(searchType), functionsDoc);
+            case FUNCTION -> new FunctionSearchCommand(project, position, getQueryMapForType(searchType));
             case CONNECTOR -> new ConnectorSearchCommand(project, position, getQueryMapForType(searchType));
             default -> throw new IllegalArgumentException("Unsupported search type: " + searchType);
         };

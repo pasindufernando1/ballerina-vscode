@@ -31,10 +31,8 @@ import io.ballerina.flowmodelgenerator.core.model.Codedata;
 import io.ballerina.flowmodelgenerator.core.model.Item;
 import io.ballerina.flowmodelgenerator.core.model.Metadata;
 import io.ballerina.flowmodelgenerator.core.model.NodeKind;
-import io.ballerina.modelgenerator.commons.CommonUtils;
 import io.ballerina.modelgenerator.commons.PackageUtil;
 import io.ballerina.modelgenerator.commons.SearchResult;
-import io.ballerina.projects.Document;
 import io.ballerina.projects.Package;
 import io.ballerina.projects.Project;
 import io.ballerina.tools.text.LineRange;
@@ -53,12 +51,8 @@ import java.util.Optional;
  */
 class NPFunctionSearchCommand extends SearchCommand {
 
-    private final Document functionsDoc;
-
-    public NPFunctionSearchCommand(Project project, LineRange position, Map<String, String> queryMap,
-                                   Document functionsDoc) {
+    public NPFunctionSearchCommand(Project project, LineRange position, Map<String, String> queryMap) {
         super(project, position, queryMap);
-        this.functionsDoc = functionsDoc;
     }
 
     @Override
@@ -89,8 +83,9 @@ class NPFunctionSearchCommand extends SearchCommand {
         List<Item> availableNodes = new ArrayList<>();
         for (Symbol symbol : functionSymbols) {
             FunctionSymbol functionSymbol = (FunctionSymbol) symbol;
-            if (functionsDoc == null ||
-                    !CommonUtils.isNaturalExpressionBodiedFunction(functionsDoc.syntaxTree(), functionSymbol)) {
+            if (!WorkspaceFunctionNodeBuilder.isNaturalExprBodiedFunction(
+                    WorkspaceFunctionNodeBuilder.getFunctionDefinition(functionSymbol,
+                            currentPackage.getDefaultModule()))) {
                 continue;
             }
 

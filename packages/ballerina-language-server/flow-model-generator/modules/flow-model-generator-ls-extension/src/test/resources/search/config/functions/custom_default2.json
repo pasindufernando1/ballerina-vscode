@@ -66,10 +66,33 @@
         },
         {
           "metadata": {
+            "label": "buildFullName",
+            "data": {
+              "isDataMappedFunction": false,
+              "isAgentTool": false,
+              "isIsolatedFunction": true
+            }
+          },
+          "codedata": {
+            "node": "FUNCTION_CALL",
+            "org": "nipunaf",
+            "module": "proj",
+            "symbol": "buildFullName",
+            "version": "0.1.0",
+            "isGenerated": false,
+            "data": {
+              "moduleRelation": "CURRENT_MODULE",
+              "moduleKind": "DEFAULT_MODULE"
+            }
+          },
+          "enabled": true
+        },
+        {
+          "metadata": {
             "label": "add",
             "description": "Adds two integers and returns the result.\n\n```\nint result = add(5, 3);\n// result will be 8\n```",
             "data": {
-              "isDataMappedFunction": false,
+              "isDataMappedFunction": true,
               "isAgentTool": false,
               "isIsolatedFunction": true
             }

@@ -764,8 +764,7 @@ public class FlowModelGeneratorService implements ExtendedLanguageServerService 
                     position = LineRange.from(filePath.toString(), start, start);
                 }
 
-                SearchCommand command = SearchCommand.from(searchKind, project, position, request.queryMap(),
-                        functionsDoc.orElse(null));
+                SearchCommand command = SearchCommand.from(searchKind, project, position, request.queryMap());
                 JsonArray categories = command.execute();
                 // A document cannot be resolved for a file that does not exist, and such a file has no test
                 // function to be inside of either.
