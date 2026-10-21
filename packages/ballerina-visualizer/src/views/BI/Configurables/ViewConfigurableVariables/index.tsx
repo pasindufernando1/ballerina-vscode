@@ -25,6 +25,7 @@ import { AddForm } from "../AddConfigurableVariables";
 import { TopNavigationBar } from "../../../../components/TopNavigationBar";
 import { TitleBar } from "../../../../components/TitleBar";
 import ConfigurableItem from "../ConfigurableItem";
+import { getConfigurableErrorMessages } from "../ConfigurableItem/utils";
 import { RelativeLoader } from "../../../../components/RelativeLoader";
 
 const Container = styled.div`
@@ -249,8 +250,8 @@ export function ViewConfigurableVariables(props?: ConfigProps) {
         }
 
         return configVariables[category][module].filter(variable => (
-            !variable?.properties?.defaultValue?.value &&
-            !variable?.properties?.configValue?.value
+            (!variable?.properties?.defaultValue?.value && !variable?.properties?.configValue?.value) ||
+            getConfigurableErrorMessages(variable).length > 0
         )).length;
     }, [configVariables]);
 

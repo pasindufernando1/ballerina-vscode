@@ -974,6 +974,7 @@ export interface BINodeTemplateRequest {
 
 export type BINodeTemplateResponse = {
     flowNode: FlowNode;
+    errorMsg?: string;
 };
 
 export interface BIModuleNodesRequest {

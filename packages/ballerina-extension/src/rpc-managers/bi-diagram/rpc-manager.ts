@@ -634,9 +634,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 })
                 .catch((error) => {
                     console.log(">>> error fetching available nodes from ls", error);
-                    return new Promise((resolve) => {
-                        resolve(undefined);
-                    });
+                    resolve(undefined);
                 });
         });
     }
@@ -653,9 +651,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 })
                 .catch((error) => {
                     console.log(">>> error fetching available model providers from ls", error);
-                    return new Promise((resolve) => {
-                        resolve(undefined);
-                    });
+                    resolve(undefined);
                 });
         });
     }
@@ -671,9 +667,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 })
                 .catch((error) => {
                     console.log(">>> error fetching available vector stores from ls", error);
-                    return new Promise((resolve) => {
-                        resolve(undefined);
-                    });
+                    resolve(undefined);
                 });
         });
     }
@@ -689,9 +683,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 })
                 .catch((error) => {
                     console.log(">>> error fetching available embedding providers from ls", error);
-                    return new Promise((resolve) => {
-                        resolve(undefined);
-                    });
+                    resolve(undefined);
                 });
         });
     }
@@ -707,9 +699,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 })
                 .catch((error) => {
                     console.log(">>> error fetching available knowledge bases from ls", error);
-                    return new Promise((resolve) => {
-                        resolve(undefined);
-                    });
+                    resolve(undefined);
                 });
         });
     }
@@ -726,9 +716,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 })
                 .catch((error) => {
                     console.log(">>> error fetching available data loaders from ls", error);
-                    return new Promise((resolve) => {
-                        resolve(undefined);
-                    });
+                    resolve(undefined);
                 });
         });
     }
@@ -744,9 +732,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 })
                 .catch((error) => {
                     console.log(">>> error fetching available chunkers from ls", error);
-                    return new Promise((resolve) => {
-                        resolve(undefined);
-                    });
+                    resolve(undefined);
                 });
         });
     }
@@ -764,7 +750,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
             console.log(`>>> Created file at ${params.filePath}`);
         }
 
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             StateMachine.langClient()
                 .getNodeTemplate(params)
                 .then((model) => {
@@ -773,9 +759,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 })
                 .catch((error) => {
                     console.log(">>> error fetching node template from ls", error);
-                    return new Promise((resolve) => {
-                        resolve(undefined);
-                    });
+                    reject(error);
                 });
         });
     }
@@ -974,9 +958,8 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                     if (!response.ok) {
                         console.log(">>> ai completion api call failed ", response.status);
                         console.log(">>> ai completion api call failed ", response);
-                        return new Promise((resolve) => {
-                            resolve(undefined);
-                        });
+                        resolve(undefined);
+                        return;
                     }
                     const data = await response.json();
                     console.log(">>> ai suggestion", { response: data });
@@ -999,24 +982,21 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 }
             } catch (error) {
                 console.log(">>> error fetching ai suggestion", error);
-                return new Promise((resolve) => {
-                    resolve(undefined);
-                });
+                resolve(undefined);
+                return;
             }
             if (!suggestedContent || suggestedContent.trim() === "") {
                 console.log(">>> ai suggested content not found");
-                return new Promise((resolve) => {
-                    resolve(undefined);
-                });
+                resolve(undefined);
+                return;
             }
 
             // get flow model from ls
             const context = StateMachine.context();
             if (!context.position) {
                 console.log(">>> position not found in the context");
-                return new Promise((resolve) => {
-                    resolve(undefined);
-                });
+                resolve(undefined);
+                return;
             }
 
             const request: BISuggestedFlowModelRequest = {
@@ -1042,9 +1022,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 })
                 .catch((error) => {
                     console.log(">>> error fetching bi suggested flow model from ls", error);
-                    return new Promise((resolve) => {
-                        resolve(undefined);
-                    });
+                    resolve(undefined);
                 });
         });
     }
@@ -1057,14 +1035,16 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 .deleteFlowNode(params)
                 .then(async (model) => {
                     console.log(">>> bi delete node from ls", model);
+                    if (model?.errorMsg || !model?.textEdits) {
+                        resolve({ artifacts: [], error: model?.errorMsg || "Failed to delete the node." });
+                        return;
+                    }
                     const artifacts = await updateSourceCode({ textEdits: model.textEdits, description: 'Flow Node Deletion - ' + params.flowNode.metadata.label, skipPayloadCheck: true });
                     resolve({ artifacts });
                 })
                 .catch((error) => {
                     console.log(">>> error fetching delete node from ls", error);
-                    return new Promise((resolve) => {
-                        resolve(undefined);
-                    });
+                    resolve({ artifacts: [], error: error?.message || String(error) });
                 });
         });
     }
@@ -1153,9 +1133,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 })
                 .catch((error) => {
                     console.log(">>> error fetching node template from ls", error);
-                    return new Promise((resolve) => {
-                        resolve(undefined);
-                    });
+                    resolve(undefined);
                 });
         });
     }
@@ -1483,9 +1461,8 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
             const context = StateMachine.context();
             if (!context.projectPath) {
                 console.log(">>> projectPath not found in the context");
-                return new Promise((resolve) => {
-                    resolve(undefined);
-                });
+                resolve(undefined);
+                return;
             }
 
             const params: BIModuleNodesRequest = {
@@ -1500,9 +1477,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 })
                 .catch((error) => {
                     console.log(">>> error fetching bi module nodes from ls", error);
-                    return new Promise((resolve) => {
-                        resolve(undefined);
-                    });
+                    resolve(undefined);
                 });
         });
     }
@@ -1899,9 +1874,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
                 })
                 .catch((error) => {
                     console.log(">>> error fetching design model from ls", error);
-                    return new Promise((resolve) => {
-                        resolve(undefined);
-                    });
+                    resolve(undefined);
                 }
                 );
         });
@@ -2053,9 +2026,7 @@ export class BiDiagramRpcManager implements BIDiagramAPI {
         const response = await fetchWithAuth(OLD_BACKEND_URL + "/completion", requestOptions);
         if (!response.ok) {
             console.log(">>> ai completion api call failed ", response);
-            return new Promise((resolve) => {
-                resolve(undefined);
-            });
+            return undefined;
         }
         const data = await response.json();
         console.log(">>> ai suggestion from remote", { response: data });

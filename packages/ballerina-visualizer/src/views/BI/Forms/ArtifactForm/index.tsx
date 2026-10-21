@@ -70,6 +70,7 @@ import {
     updateLineRange
 } from "../../../../utils/bi";
 import { debounce } from "lodash";
+import { createKeyedDebouncer } from "../../../../utils/keyedDebounce";
 import { FormTypeEditor } from "../../TypeEditor";
 import { getTypeHelper } from "../../TypeHelper";
 import { EXPRESSION_EXTRACTION_REGEX, TypeHelperContext } from "../../../../constants";
@@ -718,17 +719,21 @@ export function ArtifactForm(props: ArtifactFormProps) {
         handleExpressionEditorCancel();
     };
 
+    // Per field, so an edit in one field never cancels another field's pending check.
+    const expressionDiagnosticsDebouncer = useRef(createKeyedDebouncer(250));
+    useEffect(() => () => expressionDiagnosticsDebouncer.current.cancel(), []);
+
     const handleExpressionFormDiagnostics = useCallback(
-        debounce(
-            async (
-                showDiagnostics: boolean,
-                expression: string,
-                key: string,
-                property: ExpressionProperty,
-                setDiagnosticsInfo: (diagnostics: FormDiagnostics) => void,
-                shouldUpdateNode?: boolean,
-                variableType?: string
-            ) => {
+        (
+            showDiagnostics: boolean,
+            expression: string,
+            key: string,
+            property: ExpressionProperty,
+            setDiagnosticsInfo: (diagnostics: FormDiagnostics) => void,
+            shouldUpdateNode?: boolean,
+            variableType?: string
+        ): Promise<void> =>
+            expressionDiagnosticsDebouncer.current.schedule(key, async (isLatest) => {
                 if (!showDiagnostics) {
                     setDiagnosticsInfo({ key, diagnostics: [] });
                     return;
@@ -763,6 +768,10 @@ export function ArtifactForm(props: ArtifactFormProps) {
                                 property: updatedProperty,
                             },
                         });
+                        // A newer value for this field is already being checked.
+                        if (!isLatest()) {
+                            return;
+                        }
 
                         let uniqueDiagnostics = removeDuplicateDiagnostics(response.diagnostics);
                         // HACK: filter unknown module and undefined type diagnostics for local connections
@@ -777,12 +786,11 @@ export function ArtifactForm(props: ArtifactFormProps) {
                 } catch (error) {
                     // Remove diagnostics if LS crashes
                     console.error(">>> Error getting expression diagnostics", error);
-                    setDiagnosticsInfo({ key, diagnostics: [] });
+                    if (isLatest()) {
+                        setDiagnosticsInfo({ key, diagnostics: [] });
+                    }
                 }
-
-            },
-            250
-        ),
+            }),
         [rpcClient, fileName, targetLineRange, customDiagnosticFilter]
     );
 

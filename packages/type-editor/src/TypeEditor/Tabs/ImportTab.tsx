@@ -94,8 +94,14 @@ export function ImportTab(props: ImportTabProps) {
             filePath: Utils.joinPath(URI.file(projectPath), 'types.bal').fsPath
         });
 
+        // The LS resolves the project from the file, so the path must be absolute.
+        const typeFileName = type?.codedata?.lineRange?.fileName || "types.bal";
+        const typeFilePath = /^(\/|[a-zA-Z]:[\\/])/.test(typeFileName)
+            ? typeFileName
+            : Utils.joinPath(URI.file(projectPath), typeFileName).fsPath;
+
         const response = await rpcClient.getBIDiagramRpcClient().getExpressionDiagnostics({
-            filePath: type?.codedata?.lineRange?.fileName || "types.bal",
+            filePath: typeFilePath,
             context: {
                 expression: value,
                 startLine: {

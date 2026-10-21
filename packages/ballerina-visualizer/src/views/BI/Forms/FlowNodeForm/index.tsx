@@ -100,6 +100,7 @@ import IfForm from "../IfForm";
 import { ConnectionConfigurationPopup } from "../../Connection/ConnectionConfigurationPopup";
 import { createPortal } from "react-dom";
 import { cloneDeep, debounce } from "lodash";
+import { createKeyedDebouncer } from "../../../../utils/keyedDebounce";
 import {
     clearHiddenDependentValues,
     dependentKeys,
@@ -1368,6 +1369,11 @@ export const FlowNodeForm = forwardRef<FormExpressionEditorRef, FlowNodeFormProp
         });
     };
 
+    const hasNodeErrorMessages = (nodeWithDiagnostics: FlowNode | null): boolean =>
+        (nodeWithDiagnostics?.diagnostics?.diagnostics ?? []).some(
+            (diagnostic) => diagnostic?.severity === "ERROR" && Boolean(diagnostic?.message?.trim())
+        );
+
     const handleFormValidation = async (data: FormValues, dirtyFields?: any): Promise<boolean> => {
         // A task naming nobody is refused when the source is generated, which is after the save has
         // left the panel. Catching it here keeps the panel open with what was typed.
@@ -1391,25 +1397,33 @@ export const FlowNodeForm = forwardRef<FormExpressionEditorRef, FlowNodeFormProp
                 setDiagnosticsToFields(data, nodeWithDiagnostics!);
             }
 
-            // HACK: Ignore top-level hasDiagnostics when LS does not send property-level diagnostic messages.
+            // HACK: Ignore top-level hasDiagnostics when LS sends no diagnostic messages at all.
             if (nodeWithDiagnostics?.diagnostics?.hasDiagnostics && hasPropertyDiagnosticMessages(nodeWithDiagnostics)) {
                 return false
+            }
+            // Node-level errors are shown in the form diagnostics banner.
+            if (hasNodeErrorMessages(nodeWithDiagnostics)) {
+                return false;
             }
         }
         return true;
     };
 
+    // Per field, so an edit in one field never cancels another field's pending check.
+    const expressionDiagnosticsDebouncer = useRef(createKeyedDebouncer(250));
+    useEffect(() => () => expressionDiagnosticsDebouncer.current.cancel(), []);
+
     const handleExpressionFormDiagnostics = useCallback(
-        debounce(
-            async (
-                showDiagnostics: boolean,
-                expression: string,
-                key: string,
-                property: ExpressionProperty,
-                setDiagnosticsInfo: (diagnostics: FormDiagnostics) => void,
-                shouldUpdateNode?: boolean,
-                variableType?: string
-            ) => {
+        (
+            showDiagnostics: boolean,
+            expression: string,
+            key: string,
+            property: ExpressionProperty,
+            setDiagnosticsInfo: (diagnostics: FormDiagnostics) => void,
+            shouldUpdateNode?: boolean,
+            variableType?: string
+        ): Promise<void> =>
+            expressionDiagnosticsDebouncer.current.schedule(key, async (isLatest) => {
                 if (!showDiagnostics) {
                     setDiagnosticsInfo({ key, diagnostics: [] });
                     return;
@@ -1442,6 +1456,10 @@ export const FlowNodeForm = forwardRef<FormExpressionEditorRef, FlowNodeFormProp
                             property: updatedProperty,
                         },
                     });
+                    // A newer value for this field is already being checked.
+                    if (!isLatest()) {
+                        return;
+                    }
 
                     let uniqueDiagnostics = removeDuplicateDiagnostics(response.diagnostics);
 
@@ -1452,13 +1470,12 @@ export const FlowNodeForm = forwardRef<FormExpressionEditorRef, FlowNodeFormProp
                 } catch (error) {
                     // Remove diagnostics if LS crashes
                     console.error(">>> Error getting expression diagnostics", error);
-                    setDiagnosticsInfo({ key, diagnostics: [] });
+                    if (isLatest()) {
+                        setDiagnosticsInfo({ key, diagnostics: [] });
+                    }
                 }
-
-            },
-            250
-        ),
-        [rpcClient, fileName, targetLineRange, node, formImportsRef.current]
+            }),
+        [rpcClient, fileName, targetLineRange, node]
     );
 
     const handleCompletionItemSelect = async (
@@ -2141,6 +2158,7 @@ export const FlowNodeForm = forwardRef<FormExpressionEditorRef, FlowNodeFormProp
             <EditorContext.Provider value={{ stack, push: pushTypeStack, pop: popTypeStack, peek: peekTypeStack, replaceTop: replaceTop }}>
                 <VariableForm
                     formFields={fields}
+                    formDiagnostics={formDiagnostics}
                     projectPath={projectPath}
                     selectedNode={node.codedata.node}
                     openRecordEditor={handleOpenTypeEditor}

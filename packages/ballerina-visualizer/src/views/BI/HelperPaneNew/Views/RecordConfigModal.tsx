@@ -620,26 +620,32 @@ export function ConfigureRecordPage(props: ConfigureRecordPageProps) {
         };
 
         // Fetch diagnostics and wait for them
-        let diagnostics: any[] = [];
-        const diagnosticsPromise = new Promise<any[]>((resolve) => {
+        let diagnostics: any[] | null = [];
+        const diagnosticsPromise = new Promise<any[] | null>((resolve) => {
             const handleSetDiagnosticsInfo = (diagnosticsInfo: { key: string; diagnostics: any[] }) => {
                 const diags = diagnosticsInfo?.diagnostics || [];
                 setFormDiagnostics(diags);
                 resolve(diags);
             };
 
-            formContext.expressionEditor.getExpressionFormDiagnostics(
-                !field?.optional || expressionValue !== '',
-                expressionValue,
-                fieldKey,
-                property,
-                handleSetDiagnosticsInfo,
-                false, // isVariableNode
-                undefined // typeValue
-            );
+            // Settles with null when the check is superseded and never reports back.
+            Promise.resolve(
+                formContext.expressionEditor.getExpressionFormDiagnostics(
+                    !field?.optional || expressionValue !== '',
+                    expressionValue,
+                    fieldKey,
+                    property,
+                    handleSetDiagnosticsInfo,
+                    false, // isVariableNode
+                    undefined // typeValue
+                )
+            ).then(() => resolve(null), () => resolve(null));
         });
 
         diagnostics = await diagnosticsPromise;
+        if (diagnostics === null) {
+            return;
+        }
 
         // Check again if this is still the latest value (user may have typed more while waiting for diagnostics)
         if (expressionValue !== latestExpressionToSyncRef.current) {

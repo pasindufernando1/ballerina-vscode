@@ -591,7 +591,9 @@ const handleConnectionDeletion = async (itemLabel: string, filePath: string) => 
                 })
                 .then((response) => {
                     console.log(">>> Updated source code after delete", response);
-                    if (response.artifacts) {
+                    if (response.error) {
+                        window.showErrorMessage(response.error);
+                    } else if (response.artifacts) {
                         if (hasNoComponentsOpenInDiagram() || isFlowNodeOpenInDiagram(connector)) {
                             openView(EVENT_TYPE.OPEN_VIEW, { view: MACHINE_VIEW.PackageOverview });
                         }

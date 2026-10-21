@@ -397,7 +397,7 @@ export function GraphqlObjectViewer(props: GraphqlObjectViewerProps) {
         }
 
         const response = await rpcClient.getBIDiagramRpcClient().getExpressionDiagnostics({
-            filePath: serviceClassModel?.codedata?.lineRange?.fileName || "types.bal",
+            filePath: serviceClassFilePath || serviceClassModel?.codedata?.lineRange?.fileName || "types.bal",
             context: {
                 expression: value,
                 startLine: {
@@ -451,7 +451,7 @@ export function GraphqlObjectViewer(props: GraphqlObjectViewerProps) {
             setNameError("");
             setIsTypeNameValid(true);
         }
-    }, 250), [rpcClient, serviceClassModel]);
+    }, 250), [rpcClient, serviceClassModel, serviceClassFilePath]);
 
     const handleOnBlur = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (!saveButtonClicked.current) {

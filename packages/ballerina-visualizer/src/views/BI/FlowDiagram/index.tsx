@@ -2009,11 +2009,20 @@ export function BIFlowDiagram(props: BIFlowDiagramProps) {
                         id: node.codedata,
                     })
                     .then((response) => {
+                        if (response?.errorMsg || !response?.flowNode) {
+                            console.error(">>> getNodeTemplate failed", response?.errorMsg, node.codedata);
+                            showConnectorError(response?.errorMsg);
+                            return;
+                        }
                         selectedNodeRef.current = response.flowNode;
                         nodeTemplateRef.current = response.flowNode;
                         showEditForm.current = false;
                         setSidePanelView(SidePanelView.FORM);
                         setShowSidePanel(true);
+                    })
+                    .catch((error) => {
+                        console.error(">>> getNodeTemplate failed", error, node.codedata);
+                        showConnectorError();
                     })
                     .finally(() => {
                         setShowProgressIndicator(false);
@@ -2064,11 +2073,20 @@ export function BIFlowDiagram(props: BIFlowDiagramProps) {
                         id: node.codedata,
                     })
                     .then((response) => {
+                        if (response?.errorMsg || !response?.flowNode) {
+                            console.error(">>> getNodeTemplate failed", response?.errorMsg, node.codedata);
+                            showConnectorError(response?.errorMsg);
+                            return;
+                        }
                         selectedNodeRef.current = response.flowNode;
                         nodeTemplateRef.current = response.flowNode;
                         showEditForm.current = false;
                         setSidePanelView(SidePanelView.FORM);
                         setShowSidePanel(true);
+                    })
+                    .catch((error) => {
+                        console.error(">>> getNodeTemplate failed", error, node.codedata);
+                        showConnectorError();
                     })
                     .finally(() => {
                         setShowProgressIndicator(false);
@@ -2118,11 +2136,20 @@ export function BIFlowDiagram(props: BIFlowDiagramProps) {
                         id: node.codedata,
                     })
                     .then((response) => {
+                        if (response?.errorMsg || !response?.flowNode) {
+                            console.error(">>> getNodeTemplate failed", response?.errorMsg, node.codedata);
+                            showConnectorError(response?.errorMsg);
+                            return;
+                        }
                         selectedNodeRef.current = response.flowNode;
                         nodeTemplateRef.current = response.flowNode;
                         showEditForm.current = false;
                         setSidePanelView(SidePanelView.FORM);
                         setShowSidePanel(true);
+                    })
+                    .catch((error) => {
+                        console.error(">>> getNodeTemplate failed", error, node.codedata);
+                        showConnectorError();
                     })
                     .finally(() => {
                         setShowProgressIndicator(false);
@@ -2228,6 +2255,11 @@ export function BIFlowDiagram(props: BIFlowDiagramProps) {
                         id: { node: "MCP_TOOL_KIT" },
                     })
                     .then((response) => {
+                        if (response?.errorMsg || !response?.flowNode) {
+                            console.error(">>> getNodeTemplate failed", response?.errorMsg, node.codedata);
+                            showConnectorError(response?.errorMsg);
+                            return;
+                        }
                         pendingDurableMcpAgentRef.current = {
                             agentVar: resolveDurableAgentVar(),
                             insertBefore: targetRef.current,
@@ -2237,6 +2269,10 @@ export function BIFlowDiagram(props: BIFlowDiagramProps) {
                         showEditForm.current = false;
                         setSidePanelView(SidePanelView.FORM);
                         setShowSidePanel(true);
+                    })
+                    .catch((error) => {
+                        console.error(">>> getNodeTemplate failed", error, node.codedata);
+                        showConnectorError();
                     })
                     .finally(() => {
                         setShowProgressIndicator(false);
@@ -2388,8 +2424,8 @@ export function BIFlowDiagram(props: BIFlowDiagramProps) {
                     id: node.codedata,
                 })
                     .then((response: any) => {
-                        if (response.errorMsg) {
-                            console.error(">>> getNodeTemplate failed", response.errorMsg, node.codedata);
+                        if (response?.errorMsg || !response?.flowNode) {
+                            console.error(">>> getNodeTemplate failed", response?.errorMsg, node.codedata);
                             showConnectorError(response.errorMsg);
                             return;
                         }
@@ -2795,6 +2831,12 @@ export function BIFlowDiagram(props: BIFlowDiagramProps) {
             filePath: model.fileName,
             flowNode: node,
         });
+        if (deleteNodeResponse?.error) {
+            console.error(">>> Error deleting node", deleteNodeResponse.error);
+            setShowProgressIndicator(false);
+            rpcClient.getCommonRpcClient().showErrorMessage({ message: deleteNodeResponse.error });
+            return;
+        }
         if (deleteNodeResponse.artifacts.length === 0) {
             console.error(">>> Error updating source code", deleteNodeResponse);
         }
