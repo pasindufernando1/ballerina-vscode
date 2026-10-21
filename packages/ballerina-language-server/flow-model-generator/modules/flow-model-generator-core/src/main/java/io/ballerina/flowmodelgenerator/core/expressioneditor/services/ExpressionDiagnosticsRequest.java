@@ -56,8 +56,9 @@ public class ExpressionDiagnosticsRequest extends DiagnosticsRequest {
 
     @Override
     protected Set<Diagnostic> getSemanticDiagnostics(ExpressionEditorContext context) {
-        LineRange lineRange =
-                context.generateStatement("any|error __reserved__ = ", ";%s".formatted(System.lineSeparator()));
+        ExpressionEditorContext.Property property = context.getProperty();
+        LineRange lineRange = context.generateStatement("any|error __reserved__ = ",
+                ";%s".formatted(System.lineSeparator()), property == null ? null : property.declaredBallerinaType());
         Optional<SemanticModel> semanticModel =
                 context.workspaceManager().semanticModel(context.filePath());
         return semanticModel.map(model -> model.diagnostics(lineRange).stream()

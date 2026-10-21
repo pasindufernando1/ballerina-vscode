@@ -1,0 +1,38 @@
+{
+  "description": "A value matching a later member of a union is accepted in record mode (issue #2282)",
+  "filePath": "source.bal",
+  "context": {
+    "expression": "[1, 2]",
+    "startLine": {
+      "line": 22,
+      "offset": 0
+    },
+    "offset": 0,
+    "codedata": {
+      "node": "VARIABLE"
+    },
+    "property": {
+      "metadata": {
+        "label": "values",
+        "description": ""
+      },
+      "types": [
+        {
+          "fieldType": "RECORD_MAP_EXPRESSION",
+          "ballerinaType": "map<int>",
+          "selected": true
+        },
+        {
+          "fieldType": "EXPRESSION",
+          "ballerinaType": "map<int>|int[]",
+          "selected": false
+        }
+      ],
+      "value": "",
+      "optional": false,
+      "editable": true,
+      "advanced": false
+    }
+  },
+  "diagnostics": []
+}

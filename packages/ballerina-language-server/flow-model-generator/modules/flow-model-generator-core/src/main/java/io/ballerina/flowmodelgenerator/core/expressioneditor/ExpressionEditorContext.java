@@ -208,6 +208,16 @@ public class ExpressionEditorContext {
      * @return the line range of the generated statement.
      */
     public LineRange generateStatement(String stmtStart, String stmtEnd) {
+        return generateStatement(stmtStart, stmtEnd, property == null ? null : property.propertyType().ballerinaType());
+    }
+
+    /**
+     * Generates a Ballerina statement as {@link #generateStatement(String, String)} does, typing it with the given
+     * ballerina type instead of the one of the selected input mode.
+     *
+     * @return the line range of the generated statement.
+     */
+    public LineRange generateStatement(String stmtStart, String stmtEnd, String statementType) {
         String prefix = stmtStart;
         List<TextEdit> textEdits = new ArrayList<>();
         int lineOffset = 0;
@@ -220,8 +230,7 @@ public class ExpressionEditorContext {
             // statement is an artefact of the probe rather than of the user's expression.
             ModulePrefixContext prefixes = ModulePrefixContext.from(documentContext.document()
                     .syntaxTree().rootNode(), ModuleInfo.from(documentContext.document().module().descriptor()));
-            String ballerinaType = prefixes.requalifyAuthored(property.propertyType().ballerinaType(),
-                    property.importStatements());
+            String ballerinaType = prefixes.requalifyAuthored(statementType, property.importStatements());
             if (ballerinaType != null) {
                 prefix = String.format("%s __reserved__ = ", ballerinaType);
             }
@@ -409,6 +418,7 @@ public class ExpressionEditorContext {
         // Property values
         private String value;
         private PropertyType propertyType;
+        private String declaredBallerinaType;
         private Map<String, String> imports;
 
         // Codedata values
@@ -462,6 +472,19 @@ public class ExpressionEditorContext {
                             .orElse(types.getFirst());
                 }
 
+                // A record map entry carries only the record members of a union, while the value may match any
+                // member, so the full declared type is taken from the expression entry
+                declaredBallerinaType = propertyType.ballerinaType();
+                if (propertyType.fieldType() ==
+                        io.ballerina.flowmodelgenerator.core.model.Property.ValueType.RECORD_MAP_EXPRESSION) {
+                    types.stream()
+                            .filter(type -> type.fieldType() ==
+                                    io.ballerina.flowmodelgenerator.core.model.Property.ValueType.EXPRESSION
+                                    && type.ballerinaType() != null)
+                            .findFirst()
+                            .ifPresent(type -> declaredBallerinaType = type.ballerinaType());
+                }
+
                 if (property.has(IMPORTS_KEY) && property.get(IMPORTS_KEY).isJsonObject()) {
                     JsonObject imports = property.getAsJsonObject(IMPORTS_KEY);
                     this.imports = new java.util.HashMap<>();
@@ -495,6 +518,16 @@ public class ExpressionEditorContext {
         public PropertyType propertyType() {
             initialize();
             return propertyType;
+        }
+
+        /**
+         * Returns the type a value of this property must satisfy, regardless of the input mode selected for it.
+         *
+         * @return the declared ballerina type of the property
+         */
+        public String declaredBallerinaType() {
+            initialize();
+            return declaredBallerinaType;
         }
 
         public Map<String, String> importStatements() {

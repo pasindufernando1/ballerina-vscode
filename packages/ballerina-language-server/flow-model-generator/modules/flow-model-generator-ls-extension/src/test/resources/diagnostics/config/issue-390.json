@@ -1,0 +1,49 @@
+{
+  "description": "A reserved keyword used as a field name reports how to escape it (issue #390)",
+  "filePath": "source.bal",
+  "context": {
+    "expression": "{start: 1}",
+    "startLine": {
+      "line": 22,
+      "offset": 0
+    },
+    "offset": 0,
+    "codedata": {
+      "node": "VARIABLE"
+    },
+    "property": {
+      "metadata": {
+        "label": "Expression",
+        "description": ""
+      },
+      "types": [
+        {
+          "fieldType": "EXPRESSION"
+        }
+      ],
+      "value": "",
+      "optional": false,
+      "editable": true,
+      "advanced": false
+    }
+  },
+  "diagnostics": [
+    {
+      "range": {
+        "start": {
+          "line": 0,
+          "character": 1
+        },
+        "end": {
+          "line": 0,
+          "character": 6
+        }
+      },
+      "severity": "Error",
+      "code": {
+        "left": ""
+      },
+      "message": "`start` is a reserved keyword; write it as `'start` to use it as a name"
+    }
+  ]
+}

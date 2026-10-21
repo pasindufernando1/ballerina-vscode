@@ -1567,9 +1567,11 @@ public class BallerinaWorkspaceManager implements WorkspaceManager {
             // TODO: Remove this once https://github.com/ballerina-platform/ballerina-lang/issues/43972 is resolved
             // Save the dependencies.toml to resolve the inconsistencies issue in the subsequent builds
             if (BallerinaCompilerApi.getInstance().hasOptimizedDependencyCompilation(project)) {
+                // The reload keeps the client's experimental flag, which the default options would drop
                 BuildOptions newOptions = BuildOptions.builder()
                         .setOffline(CommonUtil.COMPILE_OFFLINE)
                         .setSticky(false)
+                        .setExperimental(buildOptions.experimental())
                         .build();
                 project = compilerApi.loadProject(filePath, newOptions);
             }
@@ -1580,6 +1582,7 @@ public class BallerinaWorkspaceManager implements WorkspaceManager {
                 BuildOptions newOptions = BuildOptions.builder()
                         .setOffline(CommonUtil.COMPILE_OFFLINE)
                         .setSticky(true)
+                        .setExperimental(buildOptions.experimental())
                         .build();
                 project = compilerApi.loadProject(filePath, newOptions);
             }

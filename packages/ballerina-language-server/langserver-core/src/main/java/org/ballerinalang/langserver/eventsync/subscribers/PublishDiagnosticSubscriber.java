@@ -26,7 +26,10 @@ import org.ballerinalang.langserver.commons.eventsync.EventKind;
 import org.ballerinalang.langserver.commons.eventsync.spi.EventSubscriber;
 import org.ballerinalang.langserver.diagnostic.DiagnosticsHelper;
 
+import java.nio.file.Path;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
@@ -39,7 +42,8 @@ import java.util.concurrent.TimeUnit;
 public class PublishDiagnosticSubscriber implements EventSubscriber {
 
     public static final String NAME = "Publish diagnostic subscriber";
-    private CompletableFuture<Boolean> latestScheduled = null;
+    // Keyed by project root, so that an update to one project does not cancel the publication of another
+    private final Map<Path, CompletableFuture<Boolean>> latestScheduled = new ConcurrentHashMap<>();
     private static final long DIAGNOSTIC_DELAY = 1;
 
     @Override
@@ -53,19 +57,24 @@ public class PublishDiagnosticSubscriber implements EventSubscriber {
         LSClientCapabilities lsClientCapabilities = context.languageServercontext().get(LSClientCapabilities.class);
         if (lsClientCapabilities == null ||
                 !lsClientCapabilities.getInitializationOptions().isEnableLightWeightMode()) {
-            // TODO: This is a legacy debouncer that does not consider multiple projects. Reuse the existing
-            //  debouncer for diagnostics as well.
-            if (latestScheduled != null && !latestScheduled.isDone()) {
-                latestScheduled.completeExceptionally(new Throwable("Cancelled diagnostic publishing"));
-            }
-
             Executor delayedExecutor = CompletableFuture.delayedExecutor(DIAGNOSTIC_DELAY, TimeUnit.SECONDS);
             CompletableFuture<Boolean> scheduledFuture = CompletableFuture.supplyAsync(() -> true, delayedExecutor);
-            latestScheduled = scheduledFuture;
+            CompletableFuture<Boolean> previous = latestScheduled.put(getProjectKey(context), scheduledFuture);
+            if (previous != null && !previous.isDone()) {
+                previous.completeExceptionally(new Throwable("Cancelled diagnostic publishing"));
+            }
             scheduledFuture.thenAcceptAsync(aBoolean -> {
                 DiagnosticsHelper diagnosticsHelper = DiagnosticsHelper.getInstance(languageServerContext);
                 diagnosticsHelper.compileAndSendDiagnostics(client, context);
             });
+        }
+    }
+
+    private static Path getProjectKey(DocumentServiceContext context) {
+        try {
+            return context.workspace().projectRoot(context.filePath());
+        } catch (RuntimeException e) {
+            return context.filePath();
         }
     }
 

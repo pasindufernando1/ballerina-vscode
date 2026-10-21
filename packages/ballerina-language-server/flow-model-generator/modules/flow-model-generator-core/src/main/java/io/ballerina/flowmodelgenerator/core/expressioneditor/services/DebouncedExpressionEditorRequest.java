@@ -72,12 +72,13 @@ public abstract class DebouncedExpressionEditorRequest<T> implements Callable<T>
         // Capture the first state of the document
         prevDoc = context.textDocument();
 
-        // Write the statement and generate the response
-        T response = getResponse(context);
-
-        // Revert the document to the previous state
-        revertDocument();
-        return response;
+        // Write the statement and generate the response, reverting the document even if that fails so a failed
+        // request does not leave its probe statement behind for the next one
+        try {
+            return getResponse(context);
+        } finally {
+            revertDocument();
+        }
     }
 
     public final void revertDocument() {

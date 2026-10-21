@@ -25,6 +25,7 @@ import io.ballerina.compiler.syntax.tree.RestParameterNode;
 import io.ballerina.projects.Project;
 import io.ballerina.tools.text.LineRange;
 import org.ballerinalang.langserver.common.utils.PathUtil;
+import org.ballerinalang.langserver.commons.BallerinaCompilerApi;
 import org.ballerinalang.langserver.commons.workspace.WorkspaceManager;
 import org.ballerinalang.langserver.diagnostic.DiagnosticsHelper;
 import org.eclipse.lsp4j.Diagnostic;
@@ -46,8 +47,10 @@ public class BallerinaRunnerUtil {
 
     public static Map<String, List<Diagnostic>> getErrorDiagnosticMap(WorkspaceManager workspaceManager,
                                                                       Project project, Path projectRoot) {
-        Collection<io.ballerina.tools.diagnostics.Diagnostic> diagnostics =
-                project.currentPackage().getCompilation().diagnosticResult().diagnostics(false, true);
+        // Goes through the version-specific compiler API, as the overload hiding dependency diagnostics is only
+        // available from Update 13 onwards
+        Collection<io.ballerina.tools.diagnostics.Diagnostic> diagnostics = BallerinaCompilerApi.getInstance()
+                .getDiagnostics(project.currentPackage().getCompilation().diagnosticResult());
         Map<String, List<Diagnostic>> diagnosticsMap = new HashMap<>();
         for (io.ballerina.tools.diagnostics.Diagnostic diag : diagnostics) {
             LineRange lineRange = diag.location().lineRange();

@@ -356,10 +356,29 @@ public class SourceBuilder {
         property.ifPresent(prop -> {
             Map<String, String> propImports = prop.imports();
             if (propImports != null) {
-                propImports.values().forEach(propImport -> acceptImportSignature(propImport.split(":")[0]));
+                propImports.forEach((qualifier, propImport) -> {
+                    String signature = propImport.split(":")[0];
+                    if (isImportReferenced(prop.value(), qualifier, signature)) {
+                        acceptImportSignature(signature);
+                    }
+                });
             }
         });
         return property;
+    }
+
+    /**
+     * Checks whether a property value refers to the module of one of its imports. A property lists the modules its
+     * type depends on, which an empty or inline value (e.g. {@code {}} for a record) never names, and importing
+     * such a module leaves an unused module prefix error in the source.
+     */
+    private static boolean isImportReferenced(Object value, String qualifier, String signature) {
+        if (!(value instanceof String text)) {
+            return true;
+        }
+        String[] parts = signature.split("/", 2);
+        String naturalPrefix = ModuleAliasResolver.selfPrefix(parts[parts.length - 1]);
+        return text.contains(qualifier + ":") || text.contains(naturalPrefix + ":");
     }
 
     public SourceBuilder acceptImport() {

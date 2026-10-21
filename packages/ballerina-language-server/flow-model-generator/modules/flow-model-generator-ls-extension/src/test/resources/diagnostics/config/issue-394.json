@@ -1,0 +1,31 @@
+{
+  "description": "A type is resolved with the import another file of the module declares (issue #394)",
+  "filePath": "proj/types.bal",
+  "context": {
+    "expression": "http:Client",
+    "startLine": {
+      "line": 0,
+      "offset": 0
+    },
+    "offset": 0,
+    "codedata": {
+      "node": "VARIABLE"
+    },
+    "property": {
+      "metadata": {
+        "label": "Type",
+        "description": "Type of the variable"
+      },
+      "types": [
+        {
+          "fieldType": "TYPE"
+        }
+      ],
+      "value": "",
+      "optional": false,
+      "editable": true,
+      "advanced": false
+    }
+  },
+  "diagnostics": []
+}

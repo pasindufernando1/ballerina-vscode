@@ -21,17 +21,30 @@ package io.ballerina.flowmodelgenerator.core.expressioneditor.services;
 import io.ballerina.compiler.api.SemanticModel;
 import io.ballerina.compiler.api.Types;
 import io.ballerina.compiler.api.symbols.TypeSymbol;
+import io.ballerina.compiler.syntax.tree.ImportDeclarationNode;
+import io.ballerina.compiler.syntax.tree.ModulePartNode;
 import io.ballerina.compiler.syntax.tree.Node;
 import io.ballerina.compiler.syntax.tree.NodeParser;
+import io.ballerina.compiler.syntax.tree.NodeVisitor;
+import io.ballerina.compiler.syntax.tree.QualifiedNameReferenceNode;
 import io.ballerina.flowmodelgenerator.core.expressioneditor.ExpressionEditorContext;
 import io.ballerina.modelgenerator.commons.CommonUtils;
+import io.ballerina.modelgenerator.commons.ImportPrefixReader;
+import io.ballerina.modelgenerator.commons.ModuleInfo;
+import io.ballerina.modelgenerator.commons.ModulePrefixContext;
 import io.ballerina.projects.Document;
+import io.ballerina.projects.DocumentId;
 import io.ballerina.tools.diagnostics.DiagnosticSeverity;
+import io.ballerina.tools.text.TextEdit;
+import io.ballerina.tools.text.TextRange;
 import org.ballerinalang.langserver.commons.BallerinaCompilerApi;
 import org.ballerinalang.util.diagnostic.DiagnosticErrorCode;
 import org.eclipse.lsp4j.Diagnostic;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -69,17 +82,21 @@ public class TypeDiagnosticRequest extends DiagnosticsRequest {
 
     @Override
     protected Set<Diagnostic> getSemanticDiagnostics(ExpressionEditorContext context) {
-        Optional<SemanticModel> semanticModel =
-                context.workspaceManager().semanticModel(context.filePath());
-        Optional<Document> document = context.workspaceManager().document(context.filePath());
-        if (semanticModel.isEmpty() || document.isEmpty()) {
-            return Set.of();
-        }
         Set<Diagnostic> diagnostics = new HashSet<>();
         String inputExpression = getTrimmedOutput(context.info().expression());
 
         // Skip validation for 'var' as it is a type inference keyword
         if (isVarType(inputExpression)) {
+            return diagnostics;
+        }
+
+        // Imports are file scoped, so the modules the type relies on are imported to the probed file first
+        inputExpression = addRequiredImports(context, inputExpression);
+
+        Optional<SemanticModel> semanticModel =
+                context.workspaceManager().semanticModel(context.filePath());
+        Optional<Document> document = context.workspaceManager().document(context.filePath());
+        if (semanticModel.isEmpty() || document.isEmpty()) {
             return diagnostics;
         }
 
@@ -116,6 +133,66 @@ public class TypeDiagnosticRequest extends DiagnosticsRequest {
             }
         }
         return diagnostics;
+    }
+
+    /**
+     * Imports the modules the type descriptor refers to into the probed file: the ones listed with the property, and
+     * the ones another file of the module imports under a prefix the type uses but this file does not bind.
+     *
+     * @return the type descriptor, requalified onto the prefixes of the probed file
+     */
+    private static String addRequiredImports(ExpressionEditorContext context, String typeDescriptor) {
+        Document document = context.documentContext().document();
+        ModulePartNode rootNode = document.syntaxTree().rootNode();
+        ModulePrefixContext prefixes = ModulePrefixContext.from(rootNode, ModuleInfo.from(document.module()
+                .descriptor()));
+        ExpressionEditorContext.Property property = context.getProperty();
+        String requalified = property == null ? typeDescriptor
+                : prefixes.requalifyAuthored(typeDescriptor, property.importStatements());
+
+        List<TextEdit> textEdits = new ArrayList<>();
+        for (String signature : prefixes.pendingImportStatements()) {
+            context.getImport(signature).ifPresent(textEdits::add);
+        }
+
+        Set<String> boundPrefixes = new HashSet<>(ImportPrefixReader.importedPrefixes(rootNode));
+        boundPrefixes.addAll(prefixes.pendingImports().values());
+        Set<String> missingPrefixes = new LinkedHashSet<>(getModulePrefixes(requalified));
+        missingPrefixes.removeAll(boundPrefixes);
+        for (DocumentId documentId : document.module().documentIds()) {
+            if (missingPrefixes.isEmpty()) {
+                break;
+            }
+            if (documentId.equals(document.documentId())) {
+                continue;
+            }
+            Node siblingRoot = document.module().document(documentId).syntaxTree().rootNode();
+            if (!(siblingRoot instanceof ModulePartNode siblingModulePart)) {
+                continue;
+            }
+            for (ImportDeclarationNode importNode : siblingModulePart.imports()) {
+                if (missingPrefixes.remove(ImportPrefixReader.prefixOf(importNode))) {
+                    textEdits.add(TextEdit.from(TextRange.from(0, 0),
+                            importNode.toSourceCode().strip() + System.lineSeparator()));
+                }
+            }
+        }
+
+        if (!textEdits.isEmpty()) {
+            context.applyTextEdits(textEdits);
+        }
+        return requalified;
+    }
+
+    private static Set<String> getModulePrefixes(String typeDescriptor) {
+        Set<String> modulePrefixes = new HashSet<>();
+        NodeParser.parseTypeDescriptor(typeDescriptor).accept(new NodeVisitor() {
+            @Override
+            public void visit(QualifiedNameReferenceNode qualifiedNameReferenceNode) {
+                modulePrefixes.add(qualifiedNameReferenceNode.modulePrefix().text());
+            }
+        });
+        return modulePrefixes;
     }
 
     private static boolean isVarType(String inputExpression) {

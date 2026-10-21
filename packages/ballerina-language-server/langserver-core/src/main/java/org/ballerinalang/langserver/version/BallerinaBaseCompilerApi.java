@@ -173,6 +173,7 @@ public class BallerinaBaseCompilerApi extends BallerinaCompilerApi {
                     BuildOptions newOptions = BuildOptions.builder()
                             .setOffline(CommonUtil.COMPILE_OFFLINE)
                             .setSticky(false)
+                            .setExperimental(buildOptions.experimental())
                             .build();
                     project = BuildProject.load(projectRoot, newOptions);
                 }

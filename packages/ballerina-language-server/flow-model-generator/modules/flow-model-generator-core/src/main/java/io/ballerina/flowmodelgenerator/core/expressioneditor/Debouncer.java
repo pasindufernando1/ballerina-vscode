@@ -27,6 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Debouncing ensures that a task is only executed after a specified delay has passed since its last invocation,
@@ -59,6 +60,7 @@ public class Debouncer {
         long delay = request.getDelay();
         String key = request.getKey();
         CompletableFuture<T> promise = new CompletableFuture<>();
+        AtomicReference<ScheduledTaskHolder<T>> holder = new AtomicReference<>();
 
         // Schedule the task to run after the specified delay.
         Future<?> scheduledFuture = scheduler.schedule(() -> {
@@ -71,16 +73,19 @@ public class Debouncer {
                 if (promise.isCompletedExceptionally()) {
                     request.revertDocument();
                 }
-                delayedMap.remove(key);
+                // Only drop this task's own entry, as a newer task may already hold the key
+                delayedMap.remove(key, holder.get());
             }
         }, delay, TIME_UNIT);
 
         // Replace any existing scheduled task with the new one.
+        holder.set(new ScheduledTaskHolder<>(promise, scheduledFuture));
         @SuppressWarnings("unchecked")
-        ScheduledTaskHolder<T> prev = (ScheduledTaskHolder<T>) delayedMap.put(key,
-                new ScheduledTaskHolder<>(promise, scheduledFuture));
+        ScheduledTaskHolder<T> prev = (ScheduledTaskHolder<T>) delayedMap.put(key, holder.get());
         if (prev != null) {
-            prev.future().cancel(true);
+            // A task that already started is left to finish, since interrupting it could stop it between modifying
+            // the document and reverting it
+            prev.future().cancel(false);
             prev.promise().completeExceptionally(new CancellationException("Debounced by a new request"));
         }
         return promise;

@@ -18,13 +18,21 @@
 
 package io.ballerina.flowmodelgenerator.core.expressioneditor.services;
 
+import com.google.gson.JsonObject;
 import io.ballerina.compiler.syntax.tree.Node;
+import io.ballerina.compiler.syntax.tree.SyntaxInfo;
 import io.ballerina.flowmodelgenerator.core.expressioneditor.ExpressionEditorContext;
 import io.ballerina.flowmodelgenerator.core.model.Property;
 import io.ballerina.modelgenerator.commons.CommonUtils;
+import io.ballerina.tools.diagnostics.DiagnosticSeverity;
+import io.ballerina.tools.text.LinePosition;
+import io.ballerina.tools.text.LineRange;
 import org.eclipse.lsp4j.Diagnostic;
 
+import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -39,8 +47,19 @@ import java.util.stream.StreamSupport;
  */
 public abstract class DiagnosticsRequest extends DebouncedExpressionEditorRequest<DiagnosticsRequest.Diagnostics> {
 
+    private static final String RESERVED_KEYWORD_MESSAGE =
+            "`%1$s` is a reserved keyword; write it as `'%1$s` to use it as a name";
+    private static final Pattern STRING_LITERAL_PATTERN = Pattern.compile("\"(?:\\\\.|[^\"\\\\])*\"|`[^`]*`");
+    // A name after '{' or ',' followed by ':' (a mapping key), or after '.' / '?.' not followed by '(' (a field). A
+    // colon directly followed by a name is a module qualifier instead, e.g. string:length
+    private static final Pattern KEYWORD_AS_NAME_PATTERN = Pattern.compile(
+            "[{,]\\s*([a-z]+)\\s*:(?![:A-Za-z_'])|\\??\\.\\s*([a-z]+)\\b(?!\\s*\\()");
+
+    private final ExpressionEditorContext context;
+
     public DiagnosticsRequest(ExpressionEditorContext context) {
         super(context);
+        this.context = context;
     }
 
     public static DiagnosticsRequest from(ExpressionEditorContext context) {
@@ -89,16 +108,82 @@ public abstract class DiagnosticsRequest extends DebouncedExpressionEditorReques
         // Check for syntax errors
         Set<Diagnostic> syntaxDiagnostics = getSyntaxDiagnostics(context);
         if (!syntaxDiagnostics.isEmpty()) {
-            return new Diagnostics(syntaxDiagnostics);
+            // An unescaped reserved keyword used as a name surfaces as an obscure parser error, so it is reported as
+            // the cause instead
+            Set<Diagnostic> keywordDiagnostics = getReservedKeywordDiagnostics(context.info().expression());
+            return new Diagnostics(keywordDiagnostics.isEmpty() ? syntaxDiagnostics : keywordDiagnostics);
         }
 
         // Check for semantic errors
         return new Diagnostics(getSemanticDiagnostics(context));
     }
 
+    /**
+     * Finds reserved keywords used without the escaping quote as a mapping constructor key (e.g. {@code {start: 1}})
+     * or as an accessed field (e.g. {@code event.start}). Method calls are left out, as the parser accepts a few
+     * keywords there (e.g. {@code arr.map(...)}).
+     *
+     * @param expression the expression to scan
+     * @return a diagnostic per reserved keyword found, with ranges relative to the expression
+     */
+    static Set<Diagnostic> getReservedKeywordDiagnostics(String expression) {
+        Set<Diagnostic> diagnostics = new HashSet<>();
+        if (expression == null || expression.isEmpty()) {
+            return diagnostics;
+        }
+        // Blank out string literals and templates so their contents are not mistaken for names, keeping offsets
+        Matcher literalMatcher = STRING_LITERAL_PATTERN.matcher(expression);
+        StringBuilder masked = new StringBuilder(expression);
+        while (literalMatcher.find()) {
+            for (int i = literalMatcher.start(); i < literalMatcher.end(); i++) {
+                if (masked.charAt(i) != '\n') {
+                    masked.setCharAt(i, ' ');
+                }
+            }
+        }
+
+        Matcher nameMatcher = KEYWORD_AS_NAME_PATTERN.matcher(masked);
+        while (nameMatcher.find()) {
+            String keyword = nameMatcher.group(1) != null ? nameMatcher.group(1) : nameMatcher.group(2);
+            int start = nameMatcher.group(1) != null ? nameMatcher.start(1) : nameMatcher.start(2);
+            if (!SyntaxInfo.isKeyword(keyword)) {
+                continue;
+            }
+            LinePosition startPosition = toLinePosition(expression, start);
+            LinePosition endPosition = toLinePosition(expression, start + keyword.length());
+            diagnostics.add(CommonUtils.createDiagnostic(String.format(RESERVED_KEYWORD_MESSAGE, keyword),
+                    LineRange.from("", startPosition, endPosition), "", DiagnosticSeverity.ERROR));
+        }
+        return diagnostics;
+    }
+
+    private static LinePosition toLinePosition(String text, int offset) {
+        int line = 0;
+        int lineStart = 0;
+        for (int i = 0; i < offset; i++) {
+            if (text.charAt(i) == '\n') {
+                line++;
+                lineStart = i + 1;
+            }
+        }
+        return LinePosition.from(line, offset - lineStart);
+    }
+
     @Override
     public String getKey() {
-        return "diagnostics";
+        // Debounced per field, so that validating one field does not cancel the pending validation of another
+        ExpressionEditorContext.Info info = context.info();
+        return "diagnostics:" + info.startLine() + ":" + getPropertyLabel(info);
+    }
+
+    private static String getPropertyLabel(ExpressionEditorContext.Info info) {
+        JsonObject property = info.property();
+        if (property == null || !property.has("metadata") || !property.get("metadata").isJsonObject()) {
+            return "";
+        }
+        JsonObject metadata = property.getAsJsonObject("metadata");
+        return metadata.has("label") && metadata.get("label").isJsonPrimitive()
+                ? metadata.get("label").getAsString() : "";
     }
 
     @Override

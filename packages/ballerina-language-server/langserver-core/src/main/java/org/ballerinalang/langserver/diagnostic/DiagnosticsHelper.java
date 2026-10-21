@@ -47,6 +47,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +68,8 @@ public class DiagnosticsHelper {
      * diagnostics. Key: package root path, Value: set of file URIs that had diagnostics
      */
     private final Map<Path, Set<String>> lastDiagnosticFileUris;
-    private CompletableFuture<Boolean> latestScheduled = null;
+    // Keyed by project root, so that a publication scheduled for one project does not cancel another's
+    private final Map<Path, CompletableFuture<Boolean>> latestScheduled = new ConcurrentHashMap<>();
     private final Deque<String> cyclicDependencyErrors;
 
     public static DiagnosticsHelper getInstance(LanguageServerContext serverContext) {
@@ -301,13 +303,12 @@ public class DiagnosticsHelper {
     private synchronized void compileAndSendDiagnostics(WorkspaceManager workspaceManager,
                                                         Path projectRoot,
                                                         ExtendedLanguageClient client) {
-        if (latestScheduled != null && !latestScheduled.isDone()) {
-            latestScheduled.completeExceptionally(new Throwable("Cancelled diagnostic publisher"));
-        }
-
         Executor delayedExecutor = CompletableFuture.delayedExecutor(DIAGNOSTIC_DELAY, TimeUnit.SECONDS);
         CompletableFuture<Boolean> scheduledFuture = CompletableFuture.supplyAsync(() -> true, delayedExecutor);
-        latestScheduled = scheduledFuture;
+        CompletableFuture<Boolean> previous = latestScheduled.put(projectRoot, scheduledFuture);
+        if (previous != null && !previous.isDone()) {
+            previous.completeExceptionally(new Throwable("Cancelled diagnostic publisher"));
+        }
         scheduledFuture
                 .thenApplyAsync((bool) -> workspaceManager.waitAndGetPackageCompilation(projectRoot))
                 .thenAccept(compilation ->

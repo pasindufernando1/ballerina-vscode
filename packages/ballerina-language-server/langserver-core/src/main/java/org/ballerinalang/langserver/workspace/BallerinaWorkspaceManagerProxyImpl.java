@@ -185,13 +185,14 @@ public class BallerinaWorkspaceManagerProxyImpl implements BallerinaWorkspaceMan
     }
 
     /**
-     * Sets the build options for both base and cloned workspace managers.
+     * Sets the build options for the base, cloned and AI workspace managers.
      *
      * @param buildOptions The build options to be set
      */
     public void setBuildOptions(BuildOptions buildOptions) {
         ((BallerinaWorkspaceManager) this.baseWorkspaceManager).setBuildOptions(buildOptions);
         this.clonedWorkspaceManager.setBuildOptions(buildOptions);
+        this.aiWorkspaceManager.setBuildOptions(buildOptions);
     }
 
     public void setEvictProjectOnLastClose(boolean enabled) {
